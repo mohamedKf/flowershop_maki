@@ -1,0 +1,56 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fraunces:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* HSL values for shadcn — tuned for pink/pastel/cream theme */
+    --background: 0 0% 100%;             /* white */
+    --foreground: 340 25% 18%;            /* deep plum text */
+
+    --card: 0 0% 100%;
+    --card-foreground: 340 25% 18%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 340 25% 18%;
+
+    --primary: 343 60% 65%;               /* blush rose */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 350 70% 96%;             /* very pale pink */
+    --secondary-foreground: 340 30% 25%;
+
+    --muted: 30 30% 97%;                  /* cream */
+    --muted-foreground: 340 10% 45%;
+
+    --accent: 345 75% 92%;                /* soft blush accent */
+    --accent-foreground: 340 30% 25%;
+
+    --destructive: 0 70% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 340 25% 92%;
+    --input: 340 25% 92%;
+    --ring: 343 60% 65%;
+
+    --radius: 0.75rem;
+  }
+
+  * { @apply border-border; }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  h1, h2, h3, h4 { @apply font-display; }
+}
+
+/* Smooth scroll */
+html { scroll-behavior: smooth; }
+
+/* Custom scrollbar — soft pink */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { @apply bg-cream-50; }
+::-webkit-scrollbar-thumb { @apply bg-blush-200 rounded-full; }
+::-webkit-scrollbar-thumb:hover { @apply bg-blush-300; }
