@@ -1,0 +1,171 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    background: #000;
+    color: #fff;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-weight: 300;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  ::selection {
+    background: #c8102e;
+    color: #fff;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #000;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #2a0408;
+    border-radius: 0;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #c8102e;
+  }
+
+  /* Smooth focus */
+  :focus-visible {
+    outline: 2px solid #c8102e;
+    outline-offset: 2px;
+  }
+
+  /* Form elements baseline */
+  input,
+  textarea,
+  select {
+    font-family: inherit;
+  }
+}
+
+@layer components {
+  /* Brand whisper text effect (decorative giant outlined "маки") */
+  .brand-whisper {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-weight: 400;
+    color: transparent;
+    -webkit-text-stroke: 1px rgba(200, 16, 46, 0.18);
+    pointer-events: none;
+    user-select: none;
+  }
+
+  /* Editorial eyebrow */
+  .eyebrow {
+    @apply inline-flex items-center gap-3 text-[11px] font-medium tracking-[0.4em] uppercase text-red;
+  }
+  .eyebrow::before {
+    content: '';
+    width: 32px;
+    height: 1px;
+    background: currentColor;
+  }
+
+  /* Sharp red CTA */
+  .btn-red {
+    @apply inline-flex items-center gap-3 bg-red text-white px-7 py-3.5 text-xs font-medium tracking-[0.28em] uppercase cursor-pointer transition-all duration-300;
+    box-shadow: 0 8px 32px rgba(200, 16, 46, 0.33);
+    border: none;
+  }
+  .btn-red:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(200, 16, 46, 0.45);
+  }
+  .btn-red:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* Outline button */
+  .btn-outline {
+    @apply inline-flex items-center gap-3 border border-rule-strong text-white px-7 py-3.5 text-xs font-medium tracking-[0.28em] uppercase cursor-pointer transition-all duration-300 bg-transparent;
+  }
+  .btn-outline:hover:not(:disabled) {
+    border-color: #c8102e;
+    color: #c8102e;
+  }
+
+  /* Section heading */
+  .section-title {
+    @apply font-display text-5xl md:text-6xl lg:text-7xl leading-[1] text-white;
+  }
+  .section-title em {
+    @apply font-serif italic text-red;
+  }
+
+  /* Label component (small caps editorial) */
+  .label-caps {
+    @apply text-[11px] font-medium tracking-[0.35em] uppercase text-red;
+  }
+
+  /* Frame box (bordered rectangle behind hero image) */
+  .frame-offset {
+    position: absolute;
+    inset: 24px;
+    border: 1px solid #c8102e;
+    pointer-events: none;
+    transform: translate(20px, 20px);
+  }
+
+  /* Form input styles */
+  .input-base {
+    @apply w-full bg-transparent border-b border-rule px-0 py-3 text-white placeholder:text-ink-muted focus:outline-none focus:border-red transition-colors;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Petal animation container */
+.petals {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 2;
+}
+.petal {
+  position: absolute;
+  top: -60px;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .petals {
+    display: none;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

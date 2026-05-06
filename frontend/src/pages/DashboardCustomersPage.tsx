@@ -1,64 +1,72 @@
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
+import { listFrom } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { formatRub } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
+import { DashboardNav } from '@/components/layout/DashboardNav';
 
 interface Customer {
-  user_id: number;
+  id: number;
   username: string;
+  first_name: string;
+  last_name: string;
   email: string;
-  full_name: string;
-  phone: string;
-  tier: string;
-  total_orders: number;
-  total_spent: string;
-  average_order_value: string;
-  last_order_at: string | null;
+  phone?: string;
   date_joined: string;
+  order_count?: number;
+  total_spent?: string;
 }
 
-const TIER_LABEL: Record<string, string> = {
-  new: 'Новый', regular: 'Постоянный', vip: 'VIP', dormant: 'Спящий',
-};
-const TIER_VARIANT: Record<string, any> = {
-  new: 'cream', regular: 'secondary', vip: 'default', dormant: 'outline',
-};
-
 export default function DashboardCustomersPage() {
-  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [list, setList] = useState<Customer[]>([]);
+  const [q, setQ] = useState('');
 
   useEffect(() => {
-    api.get<Customer[]>('/dashboard/customers/')
-      .then((r) => setCustomers(r.data))
-      .catch(() => {});
+    api.get('/dashboard/customers/').then((r) => setList(listFrom<Customer>(r.data)));
   }, []);
 
-  return (
-    <div className="container py-8">
-      <h1 className="font-display text-4xl mb-6">Клиенты</h1>
+  const filtered = list.filter(
+    (c) =>
+      !q ||
+      `${c.first_name} ${c.last_name} ${c.username} ${c.email}`.toLowerCase().includes(q.toLowerCase())
+  );
 
-      {customers.length === 0 ? (
-        <Card className="p-12 text-center text-muted-foreground">Нет клиентов</Card>
+  return (
+    <div className="container py-12">
+      <h1 className="section-title mb-3">Клиенты</h1>
+      <DashboardNav />
+
+      <Input
+        placeholder="Поиск по имени или email"
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        className="max-w-md mb-6"
+      />
+
+      {filtered.length === 0 ? (
+        <Card className="p-12 text-center text-ink-muted">Не найдено</Card>
       ) : (
-        <div className="space-y-2">
-          {customers.map((c) => (
-            <Card key={c.user_id} className="p-4 grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
-              <div className="md:col-span-2">
-                <div className="font-medium">{c.full_name}</div>
-                <div className="text-xs text-muted-foreground">
-                  {c.email} {c.phone && `· ${c.phone}`}
+        <div className="space-y-3">
+          {filtered.map((c) => (
+            <Card key={c.id} className="p-5 flex items-center justify-between gap-4 flex-wrap">
+              <div>
+                <div className="font-medium text-white text-lg">
+                  {c.first_name} {c.last_name}
+                </div>
+                <div className="text-xs text-ink-muted mt-1">
+                  {c.email} · {c.phone || '—'}
                 </div>
               </div>
-              <div className="text-sm">
-                <div className="text-muted-foreground text-xs">Заказов</div>
-                <div className="font-medium">{c.total_orders}</div>
-              </div>
-              <div className="text-sm">
-                <div className="text-muted-foreground text-xs">Потрачено</div>
-                <div className="font-medium">{formatRub(c.total_spent)}</div>
-              </div>
-              <Badge variant={TIER_VARIANT[c.tier]}>{TIER_LABEL[c.tier] ?? c.tier}</Badge>
+              {c.order_count !== undefined && (
+                <div className="text-right">
+                  <div className="font-display text-xl text-red">
+                    {c.order_count} {c.order_count === 1 ? 'заказ' : 'заказов'}
+                  </div>
+                  {c.total_spent && (
+                    <div className="text-xs text-ink-muted">{c.total_spent}</div>
+                  )}
+                </div>
+              )}
             </Card>
           ))}
         </div>

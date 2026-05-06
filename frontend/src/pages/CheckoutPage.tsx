@@ -1,210 +1,141 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import api from '@/lib/api';
-import { Order } from '@/lib/types';
-import { useCart, ACTIVE_SHOP_SLUG } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { formatRub } from '@/lib/utils';
 
-const DELIVERY_COST = 500;
-
 export default function CheckoutPage() {
-  const navigate = useNavigate();
-  const { cart, refresh } = useCart();
   const { user } = useAuth();
+  const { cart, refresh } = useCart();
+  const nav = useNavigate();
 
-  const [form, setForm] = useState({
-    customer_name: user ? `${user.first_name} ${user.last_name}`.trim() || user.username : '',
-    customer_phone: user?.phone || '',
-    customer_email: user?.email || '',
-    delivery_method: 'delivery' as 'delivery' | 'pickup',
-    delivery_address: '',
-    delivery_date: '',
-    delivery_time: '',
-    note: '',
-    promo_code: '',
-  });
+  const [name, setName] = useState(user ? `${user.first_name} ${user.last_name}`.trim() : '');
+  const [phone, setPhone] = useState('');
+  const [address, setAddress] = useState('');
+  const [notes, setNotes] = useState('');
+  const [code, setCode] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [err, setErr] = useState('');
 
-  if (!cart || cart.item_count === 0) {
-    navigate('/cart');
-    return null;
-  }
+  if (!user) return <Navigate to="/login" replace />;
+  if (!cart || cart.items.length === 0) return <Navigate to="/cart" replace />;
 
-  const subtotal = parseFloat(cart.total);
-  const deliveryCost = form.delivery_method === 'delivery' ? DELIVERY_COST : 0;
-  const total = subtotal + deliveryCost;
-
-  const update = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const submit = async () => {
     setSubmitting(true);
-    setError(null);
+    setErr('');
     try {
-      const res = await api.post<Order>('/checkout/', {
-        ...form,
-        shop: ACTIVE_SHOP_SLUG,
-        delivery_cost: String(deliveryCost),
+      const r = await api.post('/checkout/', {
+        shop: 'flowery',
+        customer_name: name,
+        customer_phone: phone,
+        customer_email: user.email,
+        delivery_address: address,
+        delivery_notes: notes,
+        promo_code: code,
       });
       await refresh();
-      navigate(`/payment/${res.data.number}`);
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'Ошибка оформления');
+      nav(`/payment/${r.data.number}`);
+    } catch (e: any) {
+      setErr(e?.response?.data?.detail || 'Не удалось оформить заказ');
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div className="container py-12">
-      <h1 className="font-display text-4xl mb-8">Оформление заказа</h1>
+    <div className="container py-16 md:py-24">
+      <div className="mb-12">
+        <div className="eyebrow mb-4">— Оформление</div>
+        <h1 className="section-title">Контактные <em>данные</em></h1>
+      </div>
 
-      <form onSubmit={submit} className="grid lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-6">
-          {/* Contact */}
-          <Card className="p-6">
-            <h2 className="font-display text-xl mb-4">Контактные данные</h2>
-            <div className="grid gap-4">
-              <Input
-                placeholder="Ваше имя *"
-                value={form.customer_name}
-                onChange={(e) => update('customer_name', e.target.value)}
-                required
-              />
-              <Input
-                placeholder="Телефон *"
-                type="tel"
-                value={form.customer_phone}
-                onChange={(e) => update('customer_phone', e.target.value)}
-                required
-              />
-              <Input
-                placeholder="Email"
-                type="email"
-                value={form.customer_email}
-                onChange={(e) => update('customer_email', e.target.value)}
-              />
-            </div>
-          </Card>
-
-          {/* Delivery */}
-          <Card className="p-6">
-            <h2 className="font-display text-xl mb-4">Доставка</h2>
-            <div className="flex gap-3 mb-4">
-              <button
-                type="button"
-                className={`flex-1 rounded-xl border-2 p-4 text-left transition-all ${
-                  form.delivery_method === 'delivery'
-                    ? 'border-primary bg-blush-50'
-                    : 'border-blush-100'
-                }`}
-                onClick={() => update('delivery_method', 'delivery')}
-              >
-                <div className="font-medium">Курьером</div>
-                <div className="text-xs text-muted-foreground">{formatRub(DELIVERY_COST)} · 2 часа</div>
-              </button>
-              <button
-                type="button"
-                className={`flex-1 rounded-xl border-2 p-4 text-left transition-all ${
-                  form.delivery_method === 'pickup'
-                    ? 'border-primary bg-blush-50'
-                    : 'border-blush-100'
-                }`}
-                onClick={() => update('delivery_method', 'pickup')}
-              >
-                <div className="font-medium">Самовывоз</div>
-                <div className="text-xs text-muted-foreground">бесплатно</div>
-              </button>
-            </div>
-
-            {form.delivery_method === 'delivery' && (
-              <div className="grid gap-4">
-                <Input
-                  placeholder="Адрес доставки *"
-                  value={form.delivery_address}
-                  onChange={(e) => update('delivery_address', e.target.value)}
-                  required
-                />
-                <div className="grid grid-cols-2 gap-4">
-                  <Input
-                    type="date"
-                    value={form.delivery_date}
-                    onChange={(e) => update('delivery_date', e.target.value)}
-                  />
-                  <Input
-                    placeholder="Время (например, 14:00–16:00)"
-                    value={form.delivery_time}
-                    onChange={(e) => update('delivery_time', e.target.value)}
-                  />
-                </div>
-              </div>
-            )}
-
-            <textarea
-              className="w-full mt-4 rounded-xl border border-input bg-white px-4 py-2 text-sm min-h-[80px]"
-              placeholder="Комментарий к заказу"
-              value={form.note}
-              onChange={(e) => update('note', e.target.value)}
-            />
-          </Card>
-
-          <Card className="p-6">
-            <h2 className="font-display text-xl mb-4">Промокод</h2>
+      <div className="grid lg:grid-cols-[1fr_400px] gap-12">
+        <div className="space-y-6 max-w-xl">
+          <div>
+            <Label>Имя и фамилия</Label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} required />
+          </div>
+          <div>
+            <Label>Телефон</Label>
             <Input
-              placeholder="Введите промокод"
-              value={form.promo_code}
-              onChange={(e) => update('promo_code', e.target.value.toUpperCase())}
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="+7 (900) 000-00-00"
+              required
             />
-          </Card>
+          </div>
+          <div>
+            <Label>Адрес доставки</Label>
+            <Textarea
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              required
+              placeholder="Город, улица, дом, квартира"
+            />
+          </div>
+          <div>
+            <Label>Комментарий курьеру (необязательно)</Label>
+            <Textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={3}
+            />
+          </div>
+          <div>
+            <Label>Промокод</Label>
+            <Input
+              value={code}
+              onChange={(e) => setCode(e.target.value.toUpperCase())}
+              placeholder="SPRING25"
+            />
+          </div>
+
+          {err && (
+            <div className="text-sm text-red border border-red/40 px-4 py-3">
+              {err}
+            </div>
+          )}
         </div>
 
-        {/* Summary */}
-        <div className="lg:col-span-1">
-          <Card className="p-6 sticky top-24">
-            <h2 className="font-display text-xl mb-4">Ваш заказ</h2>
-            <div className="space-y-2 mb-4 text-sm">
-              {cart.items.map((item) => (
-                <div key={item.id} className="flex justify-between gap-4">
-                  <div>
-                    <div className="font-medium truncate">{item.flower_name}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {item.is_custom ? `${item.stems} шт` : item.size_label} × {item.quantity}
-                    </div>
-                  </div>
-                  <div className="whitespace-nowrap">{formatRub(item.line_total)}</div>
-                </div>
-              ))}
-            </div>
-            <div className="pt-4 border-t border-blush-100 space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Товары</span>
-                <span>{formatRub(subtotal)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Доставка</span>
-                <span>{deliveryCost > 0 ? formatRub(deliveryCost) : 'бесплатно'}</span>
-              </div>
-              <div className="flex justify-between items-baseline pt-3 border-t border-blush-100">
-                <span className="font-medium">Итого</span>
-                <span className="font-display text-2xl">{formatRub(total)}</span>
-              </div>
-            </div>
+        <div className="bg-bg-card border border-rule p-8 h-fit lg:sticky lg:top-32">
+          <h3 className="font-display text-2xl text-white mb-6">Итого</h3>
 
-            {error && (
-              <div className="mt-4 p-3 rounded-lg bg-red-50 text-red-700 text-sm">{error}</div>
-            )}
+          <div className="space-y-3 mb-6 max-h-72 overflow-y-auto pr-2">
+            {cart.items.map((it) => (
+              <div key={it.id} className="flex justify-between text-sm">
+                <span className="text-ink-body truncate pr-2">
+                  {it.flower_name} × {it.quantity}
+                </span>
+                <span className="text-white whitespace-nowrap">
+                  {formatRub(it.line_total)}
+                </span>
+              </div>
+            ))}
+          </div>
 
-            <Button type="submit" size="lg" className="w-full mt-6" disabled={submitting}>
-              {submitting ? 'Создание...' : 'Перейти к оплате'}
-            </Button>
-          </Card>
+          <div className="border-t border-rule pt-6 mb-8 flex justify-between items-baseline">
+            <span className="text-[11px] tracking-[0.3em] uppercase text-ink-muted">К оплате</span>
+            <span className="font-display text-3xl text-red">
+              {formatRub(cart.total)}
+            </span>
+          </div>
+
+          <Button
+            onClick={submit}
+            disabled={submitting || !name || !phone || !address}
+            size="lg"
+            className="w-full"
+          >
+            {submitting ? 'Оформляем...' : 'К оплате'}
+          </Button>
         </div>
-      </form>
+      </div>
     </div>
   );
 }

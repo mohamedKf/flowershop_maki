@@ -1,68 +1,65 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
 
 export default function LoginPage() {
-  const { login } = useAuth();
-  const navigate = useNavigate();
+  const { user, login } = useAuth();
+  const nav = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  const [err, setErr] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  if (user) {
+    return <Navigate to={user.role === 'customer' ? '/account' : '/dashboard'} replace />;
+  }
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitting(true);
-    setError(null);
+    setBusy(true);
+    setErr('');
     try {
-      const u = await login(username, password);
-      navigate(u.role === 'manager' || u.role === 'worker' ? '/dashboard' : '/');
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'Ошибка входа');
+      await login(username, password);
+      nav('/');
+    } catch (e: any) {
+      setErr(e?.response?.data?.detail || 'Неверный логин или пароль');
     } finally {
-      setSubmitting(false);
+      setBusy(false);
     }
   };
 
   return (
-    <div className="container py-16 flex justify-center">
-      <Card className="p-8 w-full max-w-md">
-        <h1 className="font-display text-3xl mb-2">С возвращением</h1>
-        <p className="text-muted-foreground mb-6">Войдите в свой аккаунт</p>
+    <div className="container py-16 md:py-24 max-w-md">
+      <div className="eyebrow mb-4">— Вход</div>
+      <h1 className="section-title mb-10">Здравствуйте</h1>
 
-        <form onSubmit={submit} className="space-y-4">
-          <Input
-            placeholder="Имя пользователя"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-            autoFocus
-          />
-          <Input
-            placeholder="Пароль"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-          {error && (
-            <div className="p-3 rounded-lg bg-red-50 text-red-700 text-sm">{error}</div>
-          )}
-          <Button type="submit" size="lg" className="w-full" disabled={submitting}>
-            {submitting ? 'Входим...' : 'Войти'}
-          </Button>
-        </form>
-
-        <div className="mt-6 pt-6 border-t border-blush-100 text-sm text-center text-muted-foreground">
-          Нет аккаунта?{' '}
-          <Link to="/signup" className="text-blush-600 hover:text-blush-700 font-medium">
-            Зарегистрироваться
-          </Link>
+      <form onSubmit={submit} className="space-y-6">
+        <div>
+          <Label>Имя пользователя</Label>
+          <Input value={username} onChange={(e) => setUsername(e.target.value)} required autoFocus />
         </div>
-      </Card>
+        <div>
+          <Label>Пароль</Label>
+          <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+        </div>
+        {err && <div className="text-sm text-red border border-red/40 px-4 py-3">{err}</div>}
+        <Button type="submit" disabled={busy || !username || !password} size="lg" className="w-full">
+          {busy ? 'Вход...' : 'Войти'}
+        </Button>
+      </form>
+
+      <div className="mt-12 pt-8 border-t border-rule text-center">
+        <p className="text-sm text-ink-muted mb-4">Ещё нет аккаунта?</p>
+        <Link
+          to="/signup"
+          className="text-[11px] tracking-[0.28em] uppercase text-red hover:text-red-bright border-b border-red/30 hover:border-red pb-1"
+        >
+          Зарегистрироваться
+        </Link>
+      </div>
     </div>
   );
 }

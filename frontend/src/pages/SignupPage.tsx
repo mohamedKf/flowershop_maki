@@ -1,153 +1,136 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
+import api from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card } from '@/components/ui/card';
-import { ACTIVE_SHOP_SLUG } from '@/contexts/CartContext';
-import { User as UserIcon, Briefcase } from 'lucide-react';
-
-type Mode = 'customer' | 'staff';
+import { Label } from '@/components/ui/label';
 
 export default function SignupPage() {
-  const { signup, staffSignup } = useAuth();
-  const navigate = useNavigate();
-  const [mode, setMode] = useState<Mode>('customer');
-  const [form, setForm] = useState({
-    username: '', email: '', password: '', first_name: '', last_name: '', phone: '',
-    signup_code: '', shop_slug: ACTIVE_SHOP_SLUG,
-  });
-  const [errors, setErrors] = useState<Record<string, string[] | string>>({});
-  const [submitting, setSubmitting] = useState(false);
+  const { user, login } = useAuth();
+  const nav = useNavigate();
+  const [staffMode, setStaffMode] = useState(false);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [regCode, setRegCode] = useState('');
+  const [err, setErr] = useState('');
+  const [busy, setBusy] = useState(false);
 
-  const update = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
+  if (user) return <Navigate to="/" replace />;
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitting(true);
-    setErrors({});
+    setBusy(true);
+    setErr('');
     try {
-      if (mode === 'staff') {
-        await staffSignup(form);
-        navigate('/dashboard');
-      } else {
-        const { signup_code, shop_slug, ...customerForm } = form;
-        await signup(customerForm);
-        navigate('/');
-      }
-    } catch (err: any) {
-      setErrors(err.response?.data || { detail: ['Ошибка регистрации'] });
+      const url = staffMode ? '/auth/staff-signup/' : '/auth/signup/';
+      const payload: any = {
+        username,
+        password,
+        first_name: firstName,
+        last_name: lastName,
+        email,
+        phone,
+      };
+      if (staffMode) payload.registration_code = regCode;
+
+      await api.post(url, payload);
+      await login(username, password);
+      nav('/');
+    } catch (e: any) {
+      const data = e?.response?.data;
+      setErr(
+        typeof data === 'string' ? data : data?.detail || JSON.stringify(data) || 'Не удалось зарегистрироваться'
+      );
     } finally {
-      setSubmitting(false);
+      setBusy(false);
     }
   };
 
   return (
-    <div className="container py-16 flex justify-center">
-      <Card className="p-8 w-full max-w-md">
-        <h1 className="font-display text-3xl mb-2">Создайте аккаунт</h1>
-        <p className="text-muted-foreground mb-6 text-sm">
-          {mode === 'customer'
-            ? 'Чтобы заказывать быстрее и видеть историю покупок'
-            : 'Для менеджеров и сотрудников магазина'}
-        </p>
+    <div className="container py-16 md:py-24 max-w-md">
+      <div className="eyebrow mb-4">— Регистрация</div>
+      <h1 className="section-title mb-8">
+        {staffMode ? 'Сотрудник' : 'Клиент'}
+      </h1>
 
-        {/* Mode toggle */}
-        <div className="grid grid-cols-2 gap-2 p-1 bg-blush-50 rounded-2xl mb-6">
-          <button
-            type="button"
-            onClick={() => { setMode('customer'); setErrors({}); }}
-            className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
-              mode === 'customer'
-                ? 'bg-white text-blush-700 shadow-sm'
-                : 'text-stone-600 hover:text-stone-900'
-            }`}
-          >
-            <UserIcon className="h-4 w-4" /> Клиент
-          </button>
-          <button
-            type="button"
-            onClick={() => { setMode('staff'); setErrors({}); }}
-            className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
-              mode === 'staff'
-                ? 'bg-white text-blush-700 shadow-sm'
-                : 'text-stone-600 hover:text-stone-900'
-            }`}
-          >
-            <Briefcase className="h-4 w-4" /> Сотрудник
-          </button>
-        </div>
+      {/* Mode toggle */}
+      <div className="flex border border-rule mb-10">
+        <button
+          onClick={() => setStaffMode(false)}
+          className={`flex-1 py-3 text-[11px] tracking-[0.25em] uppercase transition-colors ${
+            !staffMode ? 'bg-red text-white' : 'text-ink-muted hover:text-white'
+          }`}
+        >
+          Я клиент
+        </button>
+        <button
+          onClick={() => setStaffMode(true)}
+          className={`flex-1 py-3 text-[11px] tracking-[0.25em] uppercase transition-colors ${
+            staffMode ? 'bg-red text-white' : 'text-ink-muted hover:text-white'
+          }`}
+        >
+          Сотрудник
+        </button>
+      </div>
 
-        <form onSubmit={submit} className="space-y-3">
-          {mode === 'staff' && (
-            <div>
-              <Input
-                placeholder="Код регистрации *"
-                value={form.signup_code}
-                onChange={(e) => update('signup_code', e.target.value)}
-                required
-              />
-              {errors.signup_code && (
-                <p className="text-xs text-red-600 mt-1">
-                  {Array.isArray(errors.signup_code) ? errors.signup_code[0] : errors.signup_code}
-                </p>
-              )}
-              <p className="text-xs text-stone-500 mt-1">
-                Код выдаёт владелец магазина. Определяет роль — менеджер или сотрудник.
-              </p>
-            </div>
-          )}
-
-          <Input
-            placeholder="Имя пользователя *"
-            value={form.username}
-            onChange={(e) => update('username', e.target.value)}
-            required
-            minLength={3}
-          />
-          {errors.username && <p className="text-xs text-red-600">{(errors.username as any)[0]}</p>}
-
-          <Input
-            placeholder="Email *"
-            type="email"
-            value={form.email}
-            onChange={(e) => update('email', e.target.value)}
-            required
-          />
-          {errors.email && <p className="text-xs text-red-600">{(errors.email as any)[0]}</p>}
-
-          <Input
-            placeholder="Пароль (минимум 8 символов) *"
-            type="password"
-            value={form.password}
-            onChange={(e) => update('password', e.target.value)}
-            required
-            minLength={8}
-          />
-          {errors.password && <p className="text-xs text-red-600">{(errors.password as any)[0]}</p>}
-
-          <div className="grid grid-cols-2 gap-3">
-            <Input placeholder="Имя" value={form.first_name} onChange={(e) => update('first_name', e.target.value)} />
-            <Input placeholder="Фамилия" value={form.last_name} onChange={(e) => update('last_name', e.target.value)} />
+      <form onSubmit={submit} className="space-y-5">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label>Имя</Label>
+            <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
           </div>
-          <Input placeholder="Телефон" type="tel" value={form.phone} onChange={(e) => update('phone', e.target.value)} />
-
-          {errors.detail && (
-            <div className="p-3 rounded-lg bg-red-50 text-red-700 text-sm">
-              {Array.isArray(errors.detail) ? errors.detail[0] : errors.detail}
-            </div>
-          )}
-
-          <Button type="submit" size="lg" className="w-full" disabled={submitting}>
-            {submitting ? 'Создание...' : 'Зарегистрироваться'}
-          </Button>
-        </form>
-
-        <div className="mt-6 pt-6 border-t border-blush-100 text-sm text-center text-muted-foreground">
-          Уже есть аккаунт?{' '}
-          <Link to="/login" className="text-blush-600 hover:text-blush-700 font-medium">Войти</Link>
+          <div>
+            <Label>Фамилия</Label>
+            <Input value={lastName} onChange={(e) => setLastName(e.target.value)} required />
+          </div>
         </div>
-      </Card>
+        <div>
+          <Label>Логин</Label>
+          <Input value={username} onChange={(e) => setUsername(e.target.value)} required />
+        </div>
+        <div>
+          <Label>Email</Label>
+          <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+        </div>
+        <div>
+          <Label>Телефон</Label>
+          <Input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+7..." />
+        </div>
+        <div>
+          <Label>Пароль</Label>
+          <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
+        </div>
+
+        {staffMode && (
+          <div>
+            <Label>Код регистрации</Label>
+            <Input
+              value={regCode}
+              onChange={(e) => setRegCode(e.target.value)}
+              placeholder="Получите от владельца магазина"
+              required
+            />
+          </div>
+        )}
+
+        {err && <div className="text-sm text-red border border-red/40 px-4 py-3">{err}</div>}
+
+        <Button type="submit" disabled={busy} size="lg" className="w-full">
+          {busy ? 'Создаём...' : 'Зарегистрироваться'}
+        </Button>
+      </form>
+
+      <div className="mt-10 pt-8 border-t border-rule text-center text-sm text-ink-muted">
+        Уже есть аккаунт?{' '}
+        <Link to="/login" className="text-red hover:text-red-bright underline">
+          Войти
+        </Link>
+      </div>
     </div>
   );
 }

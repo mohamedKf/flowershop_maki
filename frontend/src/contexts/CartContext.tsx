@@ -1,74 +1,91 @@
-import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from 'react';
 import api from '@/lib/api';
-import { Cart } from '@/lib/types';
+import type { Cart } from '@/lib/types';
+import { useAuth } from './AuthContext';
 
-// For demo purposes we use a fixed shop slug. In production: detect from URL/subdomain.
-export const ACTIVE_SHOP_SLUG = 'flowery';
-
-interface CartContextType {
+interface CartCtx {
   cart: Cart | null;
   loading: boolean;
+  itemCount: number;
+  add: (flowerId: number, quantity: number) => Promise<void>;
+  update: (itemId: number, quantity: number) => Promise<void>;
+  remove: (itemId: number) => Promise<void>;
+  clear: () => Promise<void>;
   refresh: () => Promise<void>;
-  addItem: (flowerId: number, sizeId?: number | null, quantity?: number) => Promise<void>;
-  removeItem: (itemId: number) => Promise<void>;
-  updateItem: (itemId: number, quantity: number) => Promise<void>;
-  clearCart: () => Promise<void>;
 }
 
-const CartContext = createContext<CartContextType | undefined>(undefined);
+const Ctx = createContext<CartCtx | undefined>(undefined);
 
 export function CartProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
   const [cart, setCart] = useState<Cart | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   const refresh = useCallback(async () => {
+    if (!user) {
+      setCart(null);
+      return;
+    }
     setLoading(true);
     try {
-      const res = await api.get<Cart>(`/cart/?shop=${ACTIVE_SHOP_SLUG}`);
-      setCart(res.data);
-    } catch (e) {
-      // ignore — cart might not exist yet for guest
+      const r = await api.get<Cart>('/cart/?shop=flowery');
+      setCart(r.data);
+    } catch {
+      setCart(null);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user]);
 
-  useEffect(() => { refresh(); }, [refresh]);
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
 
-  const addItem = async (flowerId: number, sizeId?: number | null, quantity: number = 1) => {
-    await api.post('/cart/items/', {
-      shop: ACTIVE_SHOP_SLUG,
-      flower_id: flowerId,
-      size_id: sizeId || null,
-      quantity,
-    });
+  const add = async (flowerId: number, quantity: number) => {
+    await api.post('/cart/items/', { flower: flowerId, quantity, shop: 'flowery' });
     await refresh();
   };
 
-  const removeItem = async (itemId: number) => {
-    await api.delete(`/cart/items/${itemId}/`);
-    await refresh();
-  };
-
-  const updateItem = async (itemId: number, quantity: number) => {
+  const update = async (itemId: number, quantity: number) => {
     await api.patch(`/cart/items/${itemId}/`, { quantity });
     await refresh();
   };
 
-  const clearCart = async () => {
-    await api.delete(`/cart/?shop=${ACTIVE_SHOP_SLUG}`);
+  const remove = async (itemId: number) => {
+    await api.delete(`/cart/items/${itemId}/`);
     await refresh();
   };
 
+  const clear = async () => {
+    if (!cart) return;
+    for (const item of cart.items) {
+      try {
+        await api.delete(`/cart/items/${item.id}/`);
+      } catch {}
+    }
+    await refresh();
+  };
+
+  const itemCount = cart?.items.reduce((s, i) => s + i.quantity, 0) ?? 0;
+
   return (
-    <CartContext.Provider value={{ cart, loading, refresh, addItem, removeItem, updateItem, clearCart }}>
+    <Ctx.Provider
+      value={{ cart, loading, itemCount, add, update, remove, clear, refresh }}
+    >
       {children}
-    </CartContext.Provider>
+    </Ctx.Provider>
   );
 }
 
 export function useCart() {
-  const ctx = useContext(CartContext);
-  if (!ctx) throw new Error('useCart must be used within CartProvider');
-  return ctx;
+  const v = useContext(Ctx);
+  if (!v) throw new Error('useCart must be inside CartProvider');
+  return v;
 }

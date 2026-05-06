@@ -1,104 +1,128 @@
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import api from '@/lib/api';
-import { Flower, Category } from '@/lib/types';
-import { ACTIVE_SHOP_SLUG } from '@/contexts/CartContext';
-import FlowerCard from '@/components/catalog/FlowerCard';
-import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
+import type { Flower, Category } from '@/lib/types';
+import { listFrom, formatRub } from '@/lib/utils';
+
+const SHOP_SLUG = 'flowery';
 
 export default function CatalogPage() {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const activeCategory = searchParams.get('category');
+  const [params, setParams] = useSearchParams();
   const [flowers, setFlowers] = useState<Flower[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [cats, setCats] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const activeCat = params.get('category');
+
   useEffect(() => {
-    api.get<Category[]>(`/shops/${ACTIVE_SHOP_SLUG}/categories/`)
-      .then((r) => setCategories(r.data))
-      .catch(() => {});
+    api
+      .get(`/shops/${SHOP_SLUG}/categories/`)
+      .then((r) => setCats(listFrom<Category>(r.data)));
   }, []);
 
   useEffect(() => {
     setLoading(true);
-    const url = activeCategory
-      ? `/shops/${ACTIVE_SHOP_SLUG}/flowers/?category=${activeCategory}`
-      : `/shops/${ACTIVE_SHOP_SLUG}/flowers/`;
-    api.get<Flower[]>(url)
-      .then((r) => setFlowers(r.data))
-      .catch(() => setFlowers([]))
+    const url = activeCat
+      ? `/shops/${SHOP_SLUG}/flowers/?category=${activeCat}`
+      : `/shops/${SHOP_SLUG}/flowers/`;
+    api
+      .get(url)
+      .then((r) => setFlowers(listFrom<Flower>(r.data)))
       .finally(() => setLoading(false));
-  }, [activeCategory]);
-
-  const setCategory = (id: string | null) => {
-    if (id) {
-      setSearchParams({ category: id });
-    } else {
-      setSearchParams({});
-    }
-  };
+  }, [activeCat]);
 
   return (
-    <div>
-      {/* Header */}
-      <div className="bg-gradient-to-br from-cream-50 to-blush-50 py-16">
-        <div className="container text-center">
-          <Badge variant="secondary" className="mb-4">Каталог</Badge>
-          <h1 className="font-display text-4xl md:text-6xl tracking-tight mb-4">
-            Все наши <span className="italic text-blush-600">букеты</span>
-          </h1>
-          <p className="text-muted-foreground max-w-xl mx-auto">
-            Свежесрезанные цветы, авторские композиции и сезонные коллекции —
-            каждый день мы создаём что-то особенное.
-          </p>
-        </div>
+    <div className="container py-16 md:py-24">
+      <div className="mb-12">
+        <div className="eyebrow mb-4">— Каталог</div>
+        <h1 className="section-title">
+          Все наши <em>цветы</em>
+        </h1>
       </div>
 
-      <div className="container py-12">
-        {/* Category filters */}
-        <div className="flex flex-wrap gap-2 mb-10 justify-center">
+      <div className="flex flex-wrap gap-3 mb-12 pb-8 border-b border-rule">
+        <button
+          onClick={() => {
+            const p = new URLSearchParams(params);
+            p.delete('category');
+            setParams(p);
+          }}
+          className={`px-5 py-2.5 text-[11px] tracking-[0.25em] uppercase border transition-colors ${
+            !activeCat
+              ? 'bg-red border-red text-white'
+              : 'border-rule text-ink-body hover:border-red hover:text-red'
+          }`}
+        >
+          Все
+        </button>
+        {cats.map((c) => (
           <button
-            onClick={() => setCategory(null)}
-            className={cn(
-              'px-5 py-2 rounded-full text-sm font-medium transition-all border',
-              !activeCategory
-                ? 'bg-foreground text-background border-foreground'
-                : 'bg-white border-blush-200 hover:border-blush-400'
-            )}
+            key={c.id}
+            onClick={() => {
+              const p = new URLSearchParams(params);
+              p.set('category', String(c.id));
+              setParams(p);
+            }}
+            className={`px-5 py-2.5 text-[11px] tracking-[0.25em] uppercase border transition-colors ${
+              activeCat === String(c.id)
+                ? 'bg-red border-red text-white'
+                : 'border-rule text-ink-body hover:border-red hover:text-red'
+            }`}
           >
-            Все
+            {c.name}
           </button>
-          {categories.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setCategory(String(cat.id))}
-              className={cn(
-                'px-5 py-2 rounded-full text-sm font-medium transition-all border',
-                activeCategory === String(cat.id)
-                  ? 'bg-foreground text-background border-foreground'
-                  : 'bg-white border-blush-200 hover:border-blush-400'
-              )}
-            >
-              {cat.name}
-            </button>
+        ))}
+      </div>
+
+      {loading ? (
+        <div className="py-20 text-center text-ink-muted text-sm tracking-[0.3em] uppercase">
+          Загрузка...
+        </div>
+      ) : flowers.length === 0 ? (
+        <div className="py-20 text-center text-ink-muted">Ничего не найдено</div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-16">
+          {flowers.map((f) => (
+            <Link key={f.id} to={`/flowers/${f.id}`} className="group block">
+              <div className="relative aspect-[3/4] overflow-hidden mb-5 bg-bg-stage2">
+                {f.photo ? (
+                  <img
+                    src={f.photo}
+                    alt={f.name}
+                    className="w-full h-full object-cover transition-all duration-700 group-hover:scale-105"
+                    style={{ filter: 'brightness(0.85)' }}
+                  />
+                ) : (
+                  <div className="w-full h-full" />
+                )}
+                {f.is_featured && (
+                  <span className="absolute top-4 left-4 bg-red text-white px-3 py-1 text-[10px] font-semibold tracking-[0.25em] uppercase">
+                    Хит
+                  </span>
+                )}
+                {f.is_out_of_stock && (
+                  <span className="absolute top-4 right-4 bg-bg-base/90 text-ink-muted px-3 py-1 text-[10px] tracking-[0.2em] uppercase border border-rule">
+                    нет в наличии
+                  </span>
+                )}
+              </div>
+              <div className="flex justify-between gap-4 items-start">
+                <div>
+                  <div className="text-[10px] font-medium tracking-[0.28em] uppercase text-red mb-1.5">
+                    {f.category_name}
+                  </div>
+                  <h3 className="font-display text-2xl text-white group-hover:text-red transition-colors">
+                    {f.name}
+                  </h3>
+                </div>
+                <div className="font-display text-xl text-red whitespace-nowrap">
+                  {formatRub(f.base_price)}
+                </div>
+              </div>
+            </Link>
           ))}
         </div>
-
-        {/* Flowers grid */}
-        {loading ? (
-          <div className="text-center py-20 text-muted-foreground">Загрузка...</div>
-        ) : flowers.length === 0 ? (
-          <div className="text-center py-20">
-            <div className="text-6xl mb-4">🌸</div>
-            <p className="text-muted-foreground">В этой категории пока нет букетов</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {flowers.map((f) => <FlowerCard key={f.id} flower={f} />)}
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 }

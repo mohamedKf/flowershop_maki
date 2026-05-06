@@ -1,108 +1,116 @@
-import { Link, useNavigate } from 'react-router-dom';
-import { Trash2, ShoppingBag, ArrowRight, Minus, Plus } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { formatRub } from '@/lib/utils';
+import { Trash2, Plus, Minus } from 'lucide-react';
 
 export default function CartPage() {
-  const { cart, loading, removeItem, updateItem } = useCart();
-  const navigate = useNavigate();
+  const { cart, update, remove, loading } = useCart();
 
   if (loading) {
-    return <div className="container py-20 text-center text-muted-foreground">Загрузка...</div>;
+    return (
+      <div className="container py-32 text-center text-ink-muted text-sm tracking-[0.3em] uppercase">
+        Загрузка...
+      </div>
+    );
   }
 
-  if (!cart || cart.item_count === 0) {
+  if (!cart || cart.items.length === 0) {
     return (
-      <div className="container py-24 text-center">
-        <div className="h-24 w-24 mx-auto rounded-full bg-blush-50 flex items-center justify-center mb-6">
-          <ShoppingBag className="h-10 w-10 text-blush-400" />
-        </div>
-        <h1 className="font-display text-3xl mb-3">Корзина пуста</h1>
-        <p className="text-muted-foreground mb-8">Самое время выбрать что-нибудь красивое</p>
-        <Link to="/catalog">
-          <Button size="lg">К каталогу</Button>
-        </Link>
+      <div className="container py-32 text-center">
+        <div className="font-display text-5xl text-white mb-6">Корзина пуста</div>
+        <p className="text-ink-muted mb-10">Самое время выбрать букет.</p>
+        <Link to="/catalog" className="btn-red">В каталог</Link>
       </div>
     );
   }
 
   return (
-    <div className="container py-12">
-      <h1 className="font-display text-4xl mb-8">Ваша корзина</h1>
+    <div className="container py-16 md:py-24">
+      <div className="mb-12">
+        <div className="eyebrow mb-4">— Корзина</div>
+        <h1 className="section-title">Ваш <em>заказ</em></h1>
+      </div>
 
-      <div className="grid lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-3">
-          {cart.items.map((item) => (
-            <Card key={item.id} className="p-4 flex gap-4 items-center">
-              <div className="h-20 w-20 rounded-xl bg-blush-50 overflow-hidden flex-shrink-0">
-                {item.flower_photo ? (
-                  <img src={item.flower_photo} alt={item.flower_name} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-2xl text-blush-300">❀</div>
+      <div className="grid lg:grid-cols-[1fr_400px] gap-12">
+        {/* Items */}
+        <div className="space-y-6">
+          {cart.items.map((it) => (
+            <div
+              key={it.id}
+              className="flex gap-6 pb-6 border-b border-rule items-center"
+            >
+              <div className="w-24 h-24 flex-shrink-0 bg-bg-stage2 overflow-hidden">
+                {it.flower_photo && (
+                  <img
+                    src={it.flower_photo}
+                    alt={it.flower_name}
+                    className="w-full h-full object-cover"
+                  />
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="font-display text-lg truncate">{item.flower_name}</div>
-                <div className="text-xs text-muted-foreground">
-                  {item.is_custom ? `Свой букет: ${item.stems} шт` : item.size_label}
+                <div className="font-display text-2xl text-white mb-1 truncate">
+                  {it.flower_name}
                 </div>
-                <div className="font-medium mt-1">{formatRub(item.line_total)}</div>
+                <div className="text-sm text-ink-muted">
+                  {formatRub(it.unit_price)} × {it.quantity}
+                </div>
               </div>
-
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center border border-rule">
+                  <button
+                    onClick={() => update(it.id, Math.max(1, it.quantity - 1))}
+                    className="w-8 h-8 flex items-center justify-center hover:bg-bg-elevated transition-colors"
+                  >
+                    <Minus className="w-3 h-3" />
+                  </button>
+                  <span className="w-10 text-center font-display text-base">{it.quantity}</span>
+                  <button
+                    onClick={() => update(it.id, it.quantity + 1)}
+                    className="w-8 h-8 flex items-center justify-center hover:bg-bg-elevated transition-colors"
+                  >
+                    <Plus className="w-3 h-3" />
+                  </button>
+                </div>
                 <button
-                  className="h-8 w-8 rounded-full border border-blush-200 hover:bg-blush-50 flex items-center justify-center"
-                  onClick={() => item.quantity > 1 && updateItem(item.id, item.quantity - 1)}
-                  disabled={item.quantity <= 1}
-                  aria-label="Уменьшить"
+                  onClick={() => remove(it.id)}
+                  className="w-8 h-8 flex items-center justify-center text-ink-muted hover:text-red transition-colors"
+                  aria-label="Удалить"
                 >
-                  <Minus className="h-3 w-3" />
-                </button>
-                <span className="w-6 text-center text-sm font-medium">{item.quantity}</span>
-                <button
-                  className="h-8 w-8 rounded-full border border-blush-200 hover:bg-blush-50 flex items-center justify-center"
-                  onClick={() => updateItem(item.id, item.quantity + 1)}
-                  aria-label="Увеличить"
-                >
-                  <Plus className="h-3 w-3" />
+                  <Trash2 className="w-4 h-4" />
                 </button>
               </div>
-
-              <button
-                className="text-muted-foreground hover:text-destructive p-2"
-                onClick={() => removeItem(item.id)}
-                aria-label="Удалить"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
-            </Card>
+              <div className="font-display text-2xl text-red w-32 text-right">
+                {formatRub(it.line_total)}
+              </div>
+            </div>
           ))}
         </div>
 
-        <div className="lg:col-span-1">
-          <Card className="p-6 sticky top-24">
-            <h2 className="font-display text-xl mb-4">Итого</h2>
-            <div className="flex justify-between text-sm mb-2">
-              <span className="text-muted-foreground">Товары ({cart.item_count})</span>
-              <span>{formatRub(cart.total)}</span>
-            </div>
-            <div className="flex justify-between text-sm mb-4 pb-4 border-b border-blush-100">
-              <span className="text-muted-foreground">Доставка</span>
-              <span className="text-muted-foreground">рассчитается далее</span>
-            </div>
-            <div className="flex justify-between items-baseline mb-6">
-              <span className="font-medium">К оплате</span>
-              <span className="font-display text-2xl">{formatRub(cart.total)}</span>
-            </div>
-            <Button size="lg" className="w-full" onClick={() => navigate('/checkout')}>
-              Оформить заказ <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-            <Link to="/catalog" className="block text-center text-sm text-muted-foreground hover:text-foreground mt-4">
-              Продолжить покупки
-            </Link>
-          </Card>
+        {/* Summary */}
+        <div className="bg-bg-card border border-rule p-8 h-fit lg:sticky lg:top-32">
+          <h3 className="font-display text-2xl text-white mb-6">Итого</h3>
+
+          <div className="flex justify-between mb-3 text-ink-body">
+            <span>Сумма</span>
+            <span className="font-display text-white">{formatRub(cart.subtotal)}</span>
+          </div>
+          <div className="flex justify-between mb-6 text-ink-muted text-sm">
+            <span>Доставка</span>
+            <span>при заказе</span>
+          </div>
+
+          <div className="border-t border-rule pt-6 mb-8 flex justify-between items-baseline">
+            <span className="text-[11px] tracking-[0.3em] uppercase text-ink-muted">К оплате</span>
+            <span className="font-display text-3xl text-red">
+              {formatRub(cart.total)}
+            </span>
+          </div>
+
+          <Link to="/checkout" className="btn-red w-full justify-center">
+            К оформлению
+          </Link>
         </div>
       </div>
     </div>
