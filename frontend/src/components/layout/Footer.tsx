@@ -1,69 +1,98 @@
 import { Link } from 'react-router-dom';
-import { Camera, MessageCircle, Phone } from 'lucide-react';
 import { useShop } from '@/contexts/ShopContext';
 
-export default function Footer() {
-  const { shop } = useShop();
-  const name = shop?.name || 'Цветочная';
-  const phone = shop?.phone || '';
-  const email = shop?.email || '';
-  const address = shop?.address || '';
+export function Footer() {
+  const { shop, extras } = useShop();
 
   return (
-    <footer className="bg-cream-50 border-t border-blush-100 mt-24">
-      <div className="container py-16">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
-          <div className="md:col-span-2">
-            <div className="font-display text-3xl mb-4">{name}</div>
-            <p className="text-muted-foreground max-w-md leading-relaxed">
-              Авторские букеты из свежих цветов. Создаём цветочные истории
-              с любовью и вниманием к деталям.
+    <footer className="relative bg-bg-stage2 border-t border-rule pt-20 pb-8 overflow-hidden mt-12">
+      {/* Decorative whisper text */}
+      <div
+        aria-hidden
+        className="brand-whisper absolute -bottom-10 -right-5 leading-[0.85]"
+        style={{ fontSize: 'clamp(180px, 22vw, 320px)' }}
+      >
+        маки
+      </div>
+
+      <div className="container relative">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr] gap-12 mb-16">
+          {/* Brand col */}
+          <div>
+            <div className="font-script text-5xl text-white leading-[0.9] mb-1">
+              маки
+            </div>
+            <div className="text-[10px] tracking-[0.5em] uppercase text-red mb-7 font-medium">
+              Цветочное ателье · {extras.city}
+            </div>
+            <p className="font-serif italic text-lg text-ink-body max-w-[320px] leading-relaxed mb-7">
+              «{extras.tagline}»
             </p>
-            <div className="flex gap-3 mt-6">
-              <a href="#" className="h-10 w-10 rounded-full bg-white border border-blush-200 flex items-center justify-center hover:bg-blush-50 transition-colors">
-                <Camera className="h-4 w-4 text-blush-600" />
-              </a>
-              <a href="#" className="h-10 w-10 rounded-full bg-white border border-blush-200 flex items-center justify-center hover:bg-blush-50 transition-colors">
-                <MessageCircle className="h-4 w-4 text-blush-600" />
-              </a>
-              {phone && (
-                <a href={`tel:${phone}`} className="h-10 w-10 rounded-full bg-white border border-blush-200 flex items-center justify-center hover:bg-blush-50 transition-colors">
-                  <Phone className="h-4 w-4 text-blush-600" />
-                </a>
+            <div className="flex gap-3">
+              {extras.social.instagram && (
+                <SocialBtn href={extras.social.instagram} label="IG" />
+              )}
+              {extras.social.telegram && (
+                <SocialBtn href={extras.social.telegram} label="TG" />
+              )}
+              {extras.social.vk && <SocialBtn href={extras.social.vk} label="VK" />}
+              {extras.social.whatsapp && (
+                <SocialBtn href={extras.social.whatsapp} label="WA" />
               )}
             </div>
           </div>
 
-          <div>
-            <h4 className="font-display text-lg mb-4">Магазин</h4>
-            <div className="flex flex-col gap-2 text-sm text-muted-foreground">
-              <Link to="/catalog" className="hover:text-foreground transition-colors">Каталог</Link>
-              <Link to="/custom-bouquet" className="hover:text-foreground transition-colors">Свой букет</Link>
-              <Link to="/about" className="hover:text-foreground transition-colors">О нас</Link>
-              <Link to="/account" className="hover:text-foreground transition-colors">Личный кабинет</Link>
-            </div>
-          </div>
+          <FooterCol title="Магазин">
+            <Link to="/catalog">Каталог</Link>
+            <Link to="/custom-bouquet">Свой букет</Link>
+            <Link to="/about">О студии</Link>
+          </FooterCol>
 
-          <div>
-            <h4 className="font-display text-lg mb-4">Контакты</h4>
-            <div className="flex flex-col gap-2 text-sm text-muted-foreground">
-              {phone && (
-                <a href={`tel:${phone}`} className="hover:text-foreground transition-colors">{phone}</a>
-              )}
-              {email && (
-                <a href={`mailto:${email}`} className="hover:text-foreground transition-colors">{email}</a>
-              )}
-              {address && <span>{address}</span>}
-              <span>Ежедневно 9:00 – 22:00</span>
-            </div>
-          </div>
+          <FooterCol title="Связь">
+            {shop?.phone && <a href={`tel:${shop.phone}`}>{shop.phone}</a>}
+            {shop?.email && <a href={`mailto:${shop.email}`}>{shop.email}</a>}
+            {shop?.address && <span className="block text-ink-body mb-3 text-sm">{shop.address}</span>}
+            <span className="block text-ink-body text-sm">{extras.hoursText}</span>
+          </FooterCol>
         </div>
 
-        <div className="border-t border-blush-100 mt-12 pt-8 flex flex-col md:flex-row justify-between gap-4 text-sm text-muted-foreground">
-          <span>© 2026 {name}. Все права защищены.</span>
-          <span>Сделано с ♡</span>
+        <div className="pt-8 border-t border-rule flex flex-col sm:flex-row justify-between items-center gap-2 text-[11px] tracking-[0.2em] uppercase text-ink-faint">
+          <span>© {new Date().getFullYear()} {shop?.name || 'Маки'} · с {extras.establishedYear}</span>
+          <span>Made with <span className="text-red">✦</span> in {extras.city}</span>
         </div>
       </div>
     </footer>
+  );
+}
+
+function SocialBtn({ href, label }: { href: string; label: string }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="w-10 h-10 border border-rule-strong flex items-center justify-center text-xs font-semibold tracking-wider text-ink-body hover:bg-red hover:border-red hover:text-white hover:-translate-y-0.5 transition-all"
+    >
+      {label}
+    </a>
+  );
+}
+
+function FooterCol({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <h4 className="text-[11px] tracking-[0.3em] uppercase text-red mb-6 font-medium">
+        {title}
+      </h4>
+      <div className="space-y-3 [&>a]:block [&>a]:text-sm [&>a]:text-ink-body [&>a]:no-underline [&>a:hover]:text-white [&>a]:transition-colors">
+        {children}
+      </div>
+    </div>
   );
 }

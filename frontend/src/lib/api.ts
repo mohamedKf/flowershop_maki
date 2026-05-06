@@ -1,33 +1,44 @@
 import axios from 'axios';
 
+const TOKEN_KEY = 'maki_auth_token';
+
 const api = axios.create({
   baseURL: '/api',
-  headers: { 'Content-Type': 'application/json' },
+  headers: {
+    'Content-Type': 'application/json',
+  },
 });
 
-// Attach token from localStorage on every request
+// Token interceptor
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('auth_token');
-  if (token) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (token && config.headers) {
     config.headers.Authorization = `Token ${token}`;
   }
   return config;
 });
 
-// Auto-logout on 401
+// 401 -> wipe token (caller can redirect)
 api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('auth_user');
-      // Don't redirect on /me check failures
-      if (!error.config?.url?.endsWith('/auth/me/')) {
-        window.location.href = '/login';
-      }
+  (r) => r,
+  (err) => {
+    if (err?.response?.status === 401) {
+      localStorage.removeItem(TOKEN_KEY);
     }
-    return Promise.reject(error);
+    return Promise.reject(err);
   }
 );
+
+export function setAuthToken(token: string) {
+  localStorage.setItem(TOKEN_KEY, token);
+}
+
+export function clearAuthToken() {
+  localStorage.removeItem(TOKEN_KEY);
+}
+
+export function getAuthToken(): string | null {
+  return localStorage.getItem(TOKEN_KEY);
+}
 
 export default api;

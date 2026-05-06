@@ -1,170 +1,163 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, ShoppingBag, Check, Truck, Shield } from 'lucide-react';
 import api from '@/lib/api';
-import { Flower } from '@/lib/types';
-import { useCart } from '@/contexts/CartContext';
+import type { Flower } from '@/lib/types';
+import { formatRub } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { formatRub, cn } from '@/lib/utils';
+import { useCart } from '@/contexts/CartContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { Minus, Plus } from 'lucide-react';
 
 export default function FlowerDetailPage() {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const { addItem } = useCart();
-  const [flower, setFlower] = useState<Flower | null>(null);
-  const [selectedSizeId, setSelectedSizeId] = useState<number | null>(null);
+  const { id } = useParams();
+  const nav = useNavigate();
+  const { add } = useCart();
+  const { user } = useAuth();
+  const [f, setF] = useState<Flower | null>(null);
+  const [qty, setQty] = useState(1);
   const [adding, setAdding] = useState(false);
-  const [added, setAdded] = useState(false);
+  const [err, setErr] = useState('');
 
   useEffect(() => {
-    if (!id) return;
-    api.get<Flower>(`/flowers/${id}/`)
-      .then((r) => {
-        setFlower(r.data);
-        if (r.data.sizes && r.data.sizes.length > 0) {
-          setSelectedSizeId(r.data.sizes[0].id);
-        }
-      })
-      .catch(() => navigate('/catalog'));
-  }, [id, navigate]);
+    api.get<Flower>(`/flowers/${id}/`).then((r) => setF(r.data));
+  }, [id]);
 
-  if (!flower) {
-    return <div className="container py-20 text-center text-muted-foreground">Загрузка...</div>;
+  if (!f) {
+    return (
+      <div className="container py-32 text-center text-ink-muted text-sm tracking-[0.3em] uppercase">
+        Загрузка...
+      </div>
+    );
   }
 
-  const selectedSize = flower.sizes?.find((s) => s.id === selectedSizeId);
+  const tier = (f.discount_tiers || [])
+    .filter((t) => qty >= t.min_quantity)
+    .sort((a, b) => b.min_quantity - a.min_quantity)[0];
+
+  const unitPrice = parseFloat(f.base_price);
+  const effectivePrice = tier
+    ? unitPrice * (parseFloat(tier.percent) / 100)
+    : unitPrice;
+  const total = effectivePrice * qty;
 
   const handleAdd = async () => {
-    if (!selectedSizeId) return;
+    if (!user) {
+      nav('/login');
+      return;
+    }
     setAdding(true);
+    setErr('');
     try {
-      await addItem(flower.id, selectedSizeId, 1);
-      setAdded(true);
-      setTimeout(() => setAdded(false), 2000);
-    } catch (e) {
-      console.error(e);
+      await add(f.id, qty);
+      nav('/cart');
+    } catch (e: any) {
+      setErr(e?.response?.data?.detail || 'Не удалось добавить в корзину');
     } finally {
       setAdding(false);
     }
   };
 
   return (
-    <div className="container py-8 md:py-16">
-      <button
-        onClick={() => navigate(-1)}
-        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-8 transition-colors"
-      >
-        <ArrowLeft className="h-4 w-4" /> Назад
-      </button>
-
-      <div className="grid md:grid-cols-2 gap-8 lg:gap-16">
+    <div className="container py-16 md:py-24">
+      <div className="grid lg:grid-cols-2 gap-12 lg:gap-20">
         {/* Image */}
-        <div className="aspect-[4/5] rounded-3xl overflow-hidden bg-blush-50">
-          {flower.photo ? (
-            <img src={flower.photo} alt={flower.name} className="w-full h-full object-cover" />
+        <div className="relative aspect-[3/4] overflow-hidden bg-bg-stage2">
+          {f.photo ? (
+            <img
+              src={f.photo}
+              alt={f.name}
+              className="w-full h-full object-cover"
+            />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blush-100 to-cream-100">
-              <span className="font-display text-9xl text-blush-300">❀</span>
-            </div>
+            <div className="w-full h-full" />
+          )}
+          {f.is_featured && (
+            <span className="absolute top-5 left-5 bg-red text-white px-3 py-1 text-[10px] font-semibold tracking-[0.25em] uppercase">
+              Хит
+            </span>
           )}
         </div>
 
-        {/* Details */}
+        {/* Info */}
         <div>
-          <div className="text-sm text-blush-500 font-medium uppercase tracking-wide mb-2">
-            {flower.category_name}
+          <div className="text-[11px] tracking-[0.3em] uppercase text-red mb-3">
+            {f.category_name}
           </div>
-          <h1 className="font-display text-4xl md:text-5xl tracking-tight mb-4">{flower.name}</h1>
-          {flower.description && (
-            <p className="text-muted-foreground mb-6 leading-relaxed">{flower.description}</p>
+          <h1 className="font-display text-5xl md:text-6xl text-white mb-6 leading-none">
+            {f.name}
+          </h1>
+
+          {f.description && (
+            <p className="text-ink-body text-base leading-[1.85] mb-10 max-w-md">
+              {f.description}
+            </p>
           )}
 
-          <div className="flex items-baseline gap-3 mb-8">
-            <div className="font-display text-4xl">
-              {selectedSize ? formatRub(selectedSize.price) : formatRub(flower.base_price)}
+          {/* Quantity */}
+          <div className="mb-8">
+            <div className="text-[11px] tracking-[0.25em] uppercase text-ink-muted mb-3">
+              Количество
             </div>
-            {selectedSize && (
-              <div className="text-sm text-muted-foreground">
-                за {selectedSize.quantity} {pluralStems(selectedSize.quantity)}
+            <div className="inline-flex items-center border border-rule">
+              <button
+                onClick={() => setQty(Math.max(1, qty - 1))}
+                className="w-12 h-12 flex items-center justify-center hover:bg-bg-elevated transition-colors"
+              >
+                <Minus className="w-4 h-4" />
+              </button>
+              <input
+                type="number"
+                min={1}
+                value={qty}
+                onChange={(e) => setQty(Math.max(1, parseInt(e.target.value || '1')))}
+                className="w-20 h-12 bg-transparent text-center text-white font-display text-xl"
+              />
+              <button
+                onClick={() => setQty(qty + 1)}
+                className="w-12 h-12 flex items-center justify-center hover:bg-bg-elevated transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
+            {tier && (
+              <div className="mt-3 text-xs text-red tracking-[0.18em] uppercase">
+                Скидка от {tier.min_quantity} шт. — {tier.percent}% от цены
               </div>
             )}
           </div>
 
-          {/* Size picker */}
-          {flower.sizes && flower.sizes.length > 0 && (
-            <div className="mb-8">
-              <div className="text-sm font-medium mb-3">Выберите количество</div>
-              <div className="grid grid-cols-3 gap-2">
-                {flower.sizes.map((size) => (
-                  <button
-                    key={size.id}
-                    onClick={() => setSelectedSizeId(size.id)}
-                    className={cn(
-                      'rounded-xl border-2 px-3 py-3 text-center transition-all',
-                      selectedSizeId === size.id
-                        ? 'border-primary bg-blush-50'
-                        : 'border-blush-100 hover:border-blush-300'
-                    )}
-                  >
-                    <div className="font-display text-xl">{size.quantity}</div>
-                    <div className="text-xs text-muted-foreground">{pluralStems(size.quantity)}</div>
-                    <div className="text-xs font-medium mt-1">{formatRub(size.price)}</div>
-                  </button>
-                ))}
-              </div>
-              {flower.discount_tiers && flower.discount_tiers.length > 0 && (
-                <div className="mt-4 text-xs text-muted-foreground">
-                  Скидки от количества:{' '}
-                  {flower.discount_tiers.map((t) => `${t.min_quantity}+ → ${100 - parseFloat(t.percent)}% скидка`).join(', ')}
-                </div>
-              )}
+          {/* Price */}
+          <div className="border-t border-b border-rule py-6 mb-8 flex items-baseline justify-between">
+            <span className="text-[11px] tracking-[0.3em] uppercase text-ink-muted">
+              Итого
+            </span>
+            <span className="font-display text-4xl text-red">
+              {formatRub(total)}
+            </span>
+          </div>
+
+          {f.is_out_of_stock ? (
+            <div className="px-6 py-4 border border-rule text-ink-muted text-sm tracking-[0.2em] uppercase text-center">
+              Нет в наличии
             </div>
+          ) : (
+            <Button
+              onClick={handleAdd}
+              disabled={adding}
+              size="lg"
+              className="w-full"
+            >
+              {adding ? 'Добавляем...' : 'В корзину'}
+            </Button>
           )}
 
-          {/* Add to cart */}
-          <Button
-            size="lg"
-            className="w-full"
-            onClick={handleAdd}
-            disabled={adding || flower.is_out_of_stock}
-          >
-            {added ? (
-              <><Check className="mr-2 h-5 w-5" /> Добавлено</>
-            ) : flower.is_out_of_stock ? (
-              'Нет в наличии'
-            ) : (
-              <><ShoppingBag className="mr-2 h-5 w-5" /> Добавить в корзину</>
-            )}
-          </Button>
-
-          {/* Trust badges */}
-          <div className="grid grid-cols-2 gap-4 mt-8 pt-8 border-t border-blush-100">
-            <div className="flex gap-3">
-              <Truck className="h-5 w-5 text-blush-600 flex-shrink-0 mt-0.5" />
-              <div>
-                <div className="text-sm font-medium">Доставка за 2 часа</div>
-                <div className="text-xs text-muted-foreground">по Анапе</div>
-              </div>
+          {err && (
+            <div className="mt-4 text-sm text-red border border-red/40 px-4 py-3">
+              {err}
             </div>
-            <div className="flex gap-3">
-              <Shield className="h-5 w-5 text-blush-600 flex-shrink-0 mt-0.5" />
-              <div>
-                <div className="text-sm font-medium">Гарантия свежести</div>
-                <div className="text-xs text-muted-foreground">7 дней</div>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
   );
-}
-
-function pluralStems(n: number) {
-  const mod10 = n % 10;
-  const mod100 = n % 100;
-  if (mod10 === 1 && mod100 !== 11) return 'шт';
-  if ([2, 3, 4].includes(mod10) && ![12, 13, 14].includes(mod100)) return 'шт';
-  return 'шт';
 }

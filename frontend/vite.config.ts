@@ -12,16 +12,14 @@ export default defineConfig({
   },
   server: {
     port: 5173,
-    // Proxy /api to Django dev server during development
     proxy: {
       '/api': 'http://localhost:8000',
       '/media': 'http://localhost:8000',
     },
   },
   build: {
-    // Output into Django's static folder for production
     outDir: '../static_frontend',
     emptyOutDir: true,
-    manifest: true,
+    assetsDir: 'assets',
   },
 });

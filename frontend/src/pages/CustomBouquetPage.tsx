@@ -1,189 +1,119 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Minus, ShoppingBag, Sparkles } from 'lucide-react';
 import api from '@/lib/api';
-import { Flower } from '@/lib/types';
-import { ACTIVE_SHOP_SLUG, useCart } from '@/contexts/CartContext';
+import type { Flower } from '@/lib/types';
+import { listFrom, formatRub } from '@/lib/utils';
+import { SHOP_SLUG } from '@/lib/config';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { formatRub } from '@/lib/utils';
-
-interface BouquetSelection { [flowerId: number]: number; }
+import { useCart } from '@/contexts/CartContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { Plus, Minus } from 'lucide-react';
 
 export default function CustomBouquetPage() {
-  const navigate = useNavigate();
-  const { refresh } = useCart();
   const [flowers, setFlowers] = useState<Flower[]>([]);
-  const [selection, setSelection] = useState<BouquetSelection>({});
-  const [quote, setQuote] = useState<{ total: string } | null>(null);
-  const [adding, setAdding] = useState(false);
+  const [picks, setPicks] = useState<Record<number, number>>({});
+  const { add } = useCart();
+  const { user } = useAuth();
+  const nav = useNavigate();
 
   useEffect(() => {
-    api.get<Flower[]>(`/shops/${ACTIVE_SHOP_SLUG}/flowers/?available_for_custom=1`)
-      .then((r) => setFlowers(r.data.filter((f) => !f.is_out_of_stock)))
-      .catch(() => {});
+    api
+      .get(`/shops/${SHOP_SLUG}/flowers/?available_for_custom=1`)
+      .then((r) => setFlowers(listFrom<Flower>(r.data)));
   }, []);
 
-  // Get quote whenever selection changes
-  useEffect(() => {
-    const items = Object.entries(selection)
-      .filter(([_, q]) => q > 0)
-      .map(([id, q]) => ({ flower_id: parseInt(id), quantity: q }));
-    if (items.length === 0) {
-      setQuote(null);
+  const total = Object.entries(picks).reduce((s, [id, qty]) => {
+    const f = flowers.find((x) => x.id === Number(id));
+    return s + (f ? parseFloat(f.base_price) * qty : 0);
+  }, 0);
+
+  const totalQty = Object.values(picks).reduce((s, q) => s + q, 0);
+
+  const submit = async () => {
+    if (!user) {
+      nav('/login');
       return;
     }
-    const ctrl = new AbortController();
-    api.post<{ total: string }>('/custom-bouquet/quote/', {
-      shop: ACTIVE_SHOP_SLUG, items,
-    }, { signal: ctrl.signal })
-      .then((r) => setQuote(r.data))
-      .catch(() => {});
-    return () => ctrl.abort();
-  }, [selection]);
-
-  const setQty = (flowerId: number, qty: number) => {
-    setSelection((s) => ({ ...s, [flowerId]: Math.max(0, qty) }));
-  };
-
-  const totalStems = Object.values(selection).reduce((sum, n) => sum + n, 0);
-
-  const addToCart = async () => {
-    const items = Object.entries(selection)
-      .filter(([_, q]) => q > 0)
-      .map(([id, q]) => ({ flower_id: parseInt(id), quantity: q }));
-    if (items.length === 0) return;
-    setAdding(true);
-    try {
-      await api.post('/custom-bouquet/add/', { shop: ACTIVE_SHOP_SLUG, items });
-      await refresh();
-      navigate('/cart');
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setAdding(false);
+    for (const [id, qty] of Object.entries(picks)) {
+      if (qty > 0) await add(Number(id), qty);
     }
+    nav('/cart');
   };
 
   return (
-    <div>
-      <div className="bg-gradient-to-br from-cream-50 to-blush-50 py-16">
-        <div className="container text-center">
-          <Badge variant="secondary" className="mb-4">
-            <Sparkles className="h-3 w-3 mr-1.5" />
-            Свой букет
-          </Badge>
-          <h1 className="font-display text-4xl md:text-6xl tracking-tight mb-4">
-            Соберите свой <span className="italic text-blush-600">идеальный</span> букет
-          </h1>
-          <p className="text-muted-foreground max-w-xl mx-auto">
-            Выбирайте любимые цветы, регулируйте количество — мы соберём для вас уникальную композицию.
-          </p>
-        </div>
+    <div className="container py-16 md:py-24">
+      <div className="mb-14">
+        <div className="eyebrow mb-4">— Свой букет</div>
+        <h1 className="section-title">
+          Соберите <em>свой</em>
+        </h1>
+        <p className="mt-6 max-w-xl text-ink-body leading-[1.85]">
+          Выберите цветы и количество. Наши флористы свяжут букет вручную и
+          доставят в&nbsp;течение 90 минут.
+        </p>
       </div>
 
-      <div className="container py-12 grid lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
-          <h2 className="font-display text-2xl mb-6">Доступные цветы</h2>
-          {flowers.length === 0 ? (
-            <p className="text-muted-foreground text-center py-12">Загрузка...</p>
-          ) : (
-            <div className="grid sm:grid-cols-2 gap-4">
-              {flowers.map((f) => {
-                const qty = selection[f.id] || 0;
-                return (
-                  <Card key={f.id} className="overflow-hidden">
-                    <div className="flex gap-3 p-3">
-                      <div className="h-20 w-20 rounded-xl bg-blush-50 overflow-hidden flex-shrink-0">
-                        {f.photo ? (
-                          <img src={f.photo} alt={f.name} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-2xl text-blush-300">❀</div>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium truncate">{f.name}</div>
-                        <div className="text-xs text-muted-foreground mb-2">{f.category_name}</div>
-                        <div className="text-sm font-medium">{formatRub(f.base_price)} / шт</div>
-                      </div>
-                    </div>
-                    <div className="border-t border-blush-100 p-3 flex items-center justify-between gap-2">
-                      <button
-                        onClick={() => setQty(f.id, qty - 1)}
-                        disabled={qty === 0}
-                        className="h-8 w-8 rounded-full border border-blush-200 hover:bg-blush-50 flex items-center justify-center disabled:opacity-40"
-                      >
-                        <Minus className="h-3 w-3" />
-                      </button>
-                      <input
-                        type="number"
-                        min={0}
-                        max={f.stock}
-                        value={qty}
-                        onChange={(e) => setQty(f.id, parseInt(e.target.value) || 0)}
-                        className="w-16 text-center border border-blush-100 rounded-lg py-1 text-sm"
-                      />
-                      <button
-                        onClick={() => setQty(f.id, qty + 1)}
-                        disabled={qty >= f.stock}
-                        className="h-8 w-8 rounded-full border border-blush-200 hover:bg-blush-50 flex items-center justify-center disabled:opacity-40"
-                      >
-                        <Plus className="h-3 w-3" />
-                      </button>
-                    </div>
-                  </Card>
-                );
-              })}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12 mb-12">
+        {flowers.map((f) => {
+          const qty = picks[f.id] || 0;
+          return (
+            <div key={f.id}>
+              <div className="relative aspect-square overflow-hidden mb-4 bg-bg-stage2">
+                {f.photo && (
+                  <img
+                    src={f.photo}
+                    alt={f.name}
+                    className="w-full h-full object-cover"
+                    style={{ filter: 'brightness(0.85)' }}
+                  />
+                )}
+              </div>
+              <div className="flex justify-between items-start gap-3 mb-3">
+                <div>
+                  <div className="text-[10px] tracking-[0.25em] uppercase text-red mb-1">
+                    {f.category_name}
+                  </div>
+                  <h3 className="font-display text-xl text-white">{f.name}</h3>
+                </div>
+                <div className="text-red font-display text-lg whitespace-nowrap">
+                  {formatRub(f.base_price)}
+                </div>
+              </div>
+              <div className="flex items-center border border-rule">
+                <button
+                  onClick={() => setPicks({ ...picks, [f.id]: Math.max(0, qty - 1) })}
+                  disabled={qty === 0}
+                  className="w-10 h-10 flex items-center justify-center hover:bg-bg-elevated transition-colors disabled:opacity-30"
+                >
+                  <Minus className="w-3 h-3" />
+                </button>
+                <div className="flex-1 h-10 flex items-center justify-center text-white font-display text-lg">
+                  {qty}
+                </div>
+                <button
+                  onClick={() => setPicks({ ...picks, [f.id]: qty + 1 })}
+                  className="w-10 h-10 flex items-center justify-center hover:bg-bg-elevated transition-colors"
+                >
+                  <Plus className="w-3 h-3" />
+                </button>
+              </div>
             </div>
-          )}
-        </div>
-
-        <div>
-          <Card className="p-6 sticky top-24">
-            <h2 className="font-display text-xl mb-4">Ваш букет</h2>
-
-            {totalStems === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">
-                Добавьте цветы, чтобы увидеть итоговую цену
-              </p>
-            ) : (
-              <>
-                <div className="space-y-2 mb-4 text-sm max-h-60 overflow-y-auto">
-                  {Object.entries(selection)
-                    .filter(([_, q]) => q > 0)
-                    .map(([id, q]) => {
-                      const f = flowers.find((fl) => fl.id === parseInt(id));
-                      if (!f) return null;
-                      return (
-                        <div key={id} className="flex justify-between gap-4">
-                          <span className="truncate">{f.name}</span>
-                          <span className="text-muted-foreground whitespace-nowrap">× {q}</span>
-                        </div>
-                      );
-                    })}
-                </div>
-                <div className="pt-4 border-t border-blush-100">
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-muted-foreground">Всего стеблей</span>
-                    <span>{totalStems}</span>
-                  </div>
-                  <div className="flex justify-between items-baseline">
-                    <span className="font-medium">Итого</span>
-                    <span className="font-display text-2xl">
-                      {quote ? formatRub(quote.total) : '...'}
-                    </span>
-                  </div>
-                </div>
-                <Button size="lg" className="w-full mt-4" onClick={addToCart} disabled={adding}>
-                  <ShoppingBag className="mr-2 h-4 w-4" />
-                  {adding ? 'Добавляем...' : 'В корзину'}
-                </Button>
-              </>
-            )}
-          </Card>
-        </div>
+          );
+        })}
       </div>
+
+      {/* Sticky summary */}
+      {totalQty > 0 && (
+        <div className="sticky bottom-6 z-30 bg-bg-card border border-red-shadow shadow-[0_8px_32px_rgba(200,16,46,0.25)] p-6 flex items-center justify-between gap-6 flex-wrap">
+          <div>
+            <div className="text-[10px] tracking-[0.3em] uppercase text-ink-muted mb-1">
+              {totalQty} {totalQty === 1 ? 'цветок' : totalQty < 5 ? 'цветка' : 'цветов'} в букете
+            </div>
+            <div className="font-display text-3xl text-red">{formatRub(total)}</div>
+          </div>
+          <Button onClick={submit} size="lg">Оформить букет</Button>
+        </div>
+      )}
     </div>
   );
 }

@@ -4,25 +4,31 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center whitespace-nowrap rounded-full text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+  'inline-flex items-center justify-center gap-2 whitespace-nowrap text-xs font-medium tracking-[0.28em] uppercase transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base disabled:pointer-events-none disabled:opacity-50 cursor-pointer',
   {
     variants: {
       variant: {
-        default: 'bg-primary text-primary-foreground hover:bg-blush-600 hover:-translate-y-0.5 shadow-sm',
-        destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
-        outline: 'border border-blush-300 bg-white hover:bg-blush-50 text-foreground',
-        secondary: 'bg-secondary text-secondary-foreground hover:bg-blush-100',
-        ghost: 'hover:bg-blush-50 hover:text-blush-700',
-        link: 'text-primary underline-offset-4 hover:underline',
+        default:
+          'bg-red text-white hover:-translate-y-0.5 shadow-[0_8px_32px_rgba(200,16,46,0.33)] hover:shadow-[0_12px_40px_rgba(200,16,46,0.45)]',
+        outline:
+          'border border-rule-strong bg-transparent text-white hover:border-red hover:text-red',
+        ghost: 'bg-transparent text-ink-body hover:text-white',
+        link: 'border-b border-red pb-1 text-white hover:text-red rounded-none px-0',
+        destructive: 'bg-red-deep text-white hover:bg-red',
+        secondary:
+          'bg-bg-elevated text-white border border-rule hover:border-red',
       },
       size: {
-        default: 'h-11 px-6 py-2',
-        sm: 'h-9 rounded-full px-4',
-        lg: 'h-12 rounded-full px-8 text-base',
-        icon: 'h-10 w-10',
+        default: 'h-12 px-7',
+        sm: 'h-9 px-4 text-[10px] tracking-[0.25em]',
+        lg: 'h-14 px-10 text-sm',
+        icon: 'h-10 w-10 p-0',
       },
     },
-    defaultVariants: { variant: 'default', size: 'default' },
+    defaultVariants: {
+      variant: 'default',
+      size: 'default',
+    },
   }
 );
 
@@ -35,7 +41,13 @@ export interface ButtonProps
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, ...props }, ref) => {
     const Comp = asChild ? Slot : 'button';
-    return <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />;
+    return (
+      <Comp
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        {...props}
+      />
+    );
   }
 );
 Button.displayName = 'Button';
