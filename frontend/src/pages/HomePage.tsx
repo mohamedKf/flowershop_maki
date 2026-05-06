@@ -4,6 +4,7 @@ import api from '@/lib/api';
 import type { Flower, Category, Promotion } from '@/lib/types';
 import { listFrom, formatRub } from '@/lib/utils';
 import { useShop } from '@/contexts/ShopContext';
+import { SHOP_SLUG } from '@/lib/config';
 import { Petals } from '@/components/Petals';
 
 export default function HomePage() {
@@ -15,15 +16,15 @@ export default function HomePage() {
   useEffect(() => {
     (async () => {
       try {
-        const r = await api.get('/shops/flowery/flowers/?featured=1');
+        const r = await api.get(`/shops/${SHOP_SLUG}/flowers/?featured=1`);
         setFeatured(listFrom<Flower>(r.data).slice(0, 6));
       } catch {}
       try {
-        const r = await api.get('/shops/flowery/categories/');
+        const r = await api.get(`/shops/${SHOP_SLUG}/categories/`);
         setCats(listFrom<Category>(r.data).slice(0, 5));
       } catch {}
       try {
-        const r = await api.get('/shops/flowery/promotions/');
+        const r = await api.get(`/shops/${SHOP_SLUG}/promotions/`);
         const list = listFrom<Promotion>(r.data).filter((p) => p.is_featured);
         if (list.length) setPromo(list[0]);
       } catch {}

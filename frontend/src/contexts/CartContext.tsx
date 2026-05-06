@@ -8,6 +8,7 @@ import {
 } from 'react';
 import api from '@/lib/api';
 import type { Cart } from '@/lib/types';
+import { SHOP_SLUG } from '@/lib/config';
 import { useAuth } from './AuthContext';
 
 interface CartCtx {
@@ -35,7 +36,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
     setLoading(true);
     try {
-      const r = await api.get<Cart>('/cart/?shop=flowery');
+      const r = await api.get<Cart>(`/cart/?shop=${SHOP_SLUG}`);
       setCart(r.data);
     } catch {
       setCart(null);
@@ -49,7 +50,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [refresh]);
 
   const add = async (flowerId: number, quantity: number) => {
-    await api.post('/cart/items/', { flower: flowerId, quantity, shop: 'flowery' });
+    await api.post('/cart/items/', { flower: flowerId, quantity, shop: SHOP_SLUG });
     await refresh();
   };
 

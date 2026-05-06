@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '@/lib/api';
 import type { Flower } from '@/lib/types';
 import { listFrom, formatRub } from '@/lib/utils';
+import { SHOP_SLUG } from '@/lib/config';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -17,7 +18,7 @@ export default function CustomBouquetPage() {
 
   useEffect(() => {
     api
-      .get('/shops/flowery/flowers/?available_for_custom=1')
+      .get(`/shops/${SHOP_SLUG}/flowers/?available_for_custom=1`)
       .then((r) => setFlowers(listFrom<Flower>(r.data)));
   }, []);
 

@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { formatRub } from '@/lib/utils';
+import { SHOP_SLUG } from '@/lib/config';
 
 export default function CheckoutPage() {
   const { user } = useAuth();
@@ -30,7 +31,7 @@ export default function CheckoutPage() {
     setErr('');
     try {
       const r = await api.post('/checkout/', {
-        shop: 'flowery',
+        shop: SHOP_SLUG,
         customer_name: name,
         customer_phone: phone,
         customer_email: user.email,

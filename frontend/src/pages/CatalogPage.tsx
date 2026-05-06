@@ -3,8 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import api from '@/lib/api';
 import type { Flower, Category } from '@/lib/types';
 import { listFrom, formatRub } from '@/lib/utils';
-
-const SHOP_SLUG = 'flowery';
+import { SHOP_SLUG } from '@/lib/config';
 
 export default function CatalogPage() {
   const [params, setParams] = useSearchParams();

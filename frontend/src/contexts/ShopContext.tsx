@@ -8,6 +8,7 @@ import {
 import api from '@/lib/api';
 import type { Shop, ShopExtras } from '@/lib/types';
 import { SHOP_EXTRAS } from '@/lib/shop-extras';
+import { SHOP_SLUG } from '@/lib/config';
 
 interface ShopCtx {
   shop: Shop | null;
@@ -17,8 +18,6 @@ interface ShopCtx {
 }
 
 const Ctx = createContext<ShopCtx | undefined>(undefined);
-
-const SHOP_SLUG = 'flowery';
 
 export function ShopProvider({ children }: { children: ReactNode }) {
   const [shop, setShop] = useState<Shop | null>(null);

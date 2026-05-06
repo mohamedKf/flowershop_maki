@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import api from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
+import { SHOP_SLUG } from '@/lib/config';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -36,7 +37,10 @@ export default function SignupPage() {
         email,
         phone,
       };
-      if (staffMode) payload.registration_code = regCode;
+      if (staffMode) {
+        payload.signup_code = regCode;
+        payload.shop_slug = SHOP_SLUG;
+      }
 
       await api.post(url, payload);
       await login(username, password);
