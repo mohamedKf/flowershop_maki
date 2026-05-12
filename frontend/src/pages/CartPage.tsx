@@ -18,7 +18,7 @@ export default function CartPage() {
   if (!cart || cart.items.length === 0) {
     return (
       <div className="container py-32 text-center">
-        <div className="font-display text-5xl text-white mb-6">Корзина пуста</div>
+        <div className="font-display text-5xl text-ink-primary mb-6">Корзина пуста</div>
         <p className="text-ink-muted mb-10">Самое время выбрать букет.</p>
         <Link to="/catalog" className="btn-red">В каталог</Link>
       </div>
@@ -38,26 +38,31 @@ export default function CartPage() {
           {cart.items.map((it) => (
             <div
               key={it.id}
-              className="flex gap-6 pb-6 border-b border-rule items-center"
+              className="flex flex-col sm:flex-row gap-4 sm:gap-6 pb-6 border-b border-rule sm:items-center"
             >
-              <div className="w-24 h-24 flex-shrink-0 bg-bg-stage2 overflow-hidden">
-                {it.flower_photo && (
-                  <img
-                    src={it.flower_photo}
-                    alt={it.flower_name}
-                    className="w-full h-full object-cover"
-                  />
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="font-display text-2xl text-white mb-1 truncate">
-                  {it.flower_name}
+              <div className="flex gap-4 flex-1 min-w-0 items-center">
+                <div className="w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0 bg-bg-stage2 overflow-hidden">
+                  {it.flower_photo && (
+                    <img
+                      src={it.flower_photo}
+                      alt={it.flower_name}
+                      className="w-full h-full object-cover"
+                    />
+                  )}
                 </div>
-                <div className="text-sm text-ink-muted">
-                  {formatRub(it.unit_price)} × {it.quantity}
+                <div className="flex-1 min-w-0">
+                  <div className="font-display text-xl sm:text-2xl text-ink-primary mb-1 truncate">
+                    {it.flower_name}
+                  </div>
+                  <div className="text-sm text-ink-muted">
+                    {formatRub(it.unit_price)} × {it.quantity}
+                  </div>
+                  <div className="font-display text-lg text-red sm:hidden mt-1">
+                    {formatRub(it.line_total)}
+                  </div>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center justify-between sm:justify-start gap-3">
                 <div className="flex items-center border border-rule">
                   <button
                     onClick={() => update(it.id, Math.max(1, it.quantity - 1))}
@@ -81,7 +86,7 @@ export default function CartPage() {
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
-              <div className="font-display text-2xl text-red w-32 text-right">
+              <div className="hidden sm:block font-display text-2xl text-red w-32 text-right">
                 {formatRub(it.line_total)}
               </div>
             </div>
@@ -90,11 +95,11 @@ export default function CartPage() {
 
         {/* Summary */}
         <div className="bg-bg-card border border-rule p-8 h-fit lg:sticky lg:top-32">
-          <h3 className="font-display text-2xl text-white mb-6">Итого</h3>
+          <h3 className="font-display text-2xl text-ink-primary mb-6">Итого</h3>
 
           <div className="flex justify-between mb-3 text-ink-body">
             <span>Сумма</span>
-            <span className="font-display text-white">{formatRub(cart.subtotal)}</span>
+            <span className="font-display text-ink-primary">{formatRub(cart.subtotal)}</span>
           </div>
           <div className="flex justify-between mb-6 text-ink-muted text-sm">
             <span>Доставка</span>

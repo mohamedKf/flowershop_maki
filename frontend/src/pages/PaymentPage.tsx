@@ -43,7 +43,7 @@ export default function PaymentPage() {
     return (
       <div className="container py-32 text-center">
         <CheckCircle2 className="w-20 h-20 text-red mx-auto mb-6" />
-        <h1 className="font-display text-5xl text-white mb-4">Оплачено</h1>
+        <h1 className="font-display text-5xl text-ink-primary mb-4">Оплачено</h1>
         <p className="text-ink-body">Заказ № {order.number} принят в работу.</p>
       </div>
     );
@@ -61,7 +61,7 @@ export default function PaymentPage() {
               <span className="text-ink-body">
                 {it.flower_name} × {it.quantity}
               </span>
-              <span className="text-white">{formatRub(it.line_total)}</span>
+              <span className="text-ink-primary">{formatRub(it.line_total)}</span>
             </div>
           ))}
         </div>

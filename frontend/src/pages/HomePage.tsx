@@ -32,22 +32,20 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="bg-bg-base text-white">
+    <div className="bg-bg-base text-ink-primary">
       {/* ─── HERO ─────────────────────────────────────────────────────────── */}
       <section
         className="relative w-full overflow-hidden"
         style={{
           minHeight: '100vh',
-          background:
-            'radial-gradient(ellipse at 70% 30%, #2a0408 0%, #0a0203 55%, #000 100%)',
+          background: 'var(--hero-gradient)',
         }}
       >
         {/* Film grain colored vignettes */}
         <div
           className="absolute inset-0 z-[1] pointer-events-none"
           style={{
-            background:
-              'radial-gradient(circle at 20% 80%, rgba(200,16,46,0.12), transparent 50%), radial-gradient(circle at 90% 10%, rgba(200,16,46,0.08), transparent 40%)',
+            background: 'var(--hero-vignette)',
           }}
         />
 
@@ -57,8 +55,8 @@ export default function HomePage() {
           className="brand-whisper absolute leading-[0.85] z-[1]"
           style={{
             bottom: '-20px',
-            left: '80px',
-            fontSize: 'clamp(180px, 26vw, 360px)',
+            left: 'clamp(20px, 6vw, 80px)',
+            fontSize: 'clamp(110px, 26vw, 360px)',
             letterSpacing: '-0.04em',
           }}
         >
@@ -69,8 +67,8 @@ export default function HomePage() {
         <Petals />
 
         {/* Left vertical rail */}
-        <div className="absolute left-0 top-0 bottom-0 w-20 border-r border-rule z-[4] flex flex-col items-center justify-between py-10 hidden md:flex">
-          <Link to="/" className="font-serif italic text-[22px] text-white">
+        <div className="absolute left-0 top-0 bottom-0 w-20 border-r border-rule z-[4] hidden md:flex flex-col items-center justify-between py-10">
+          <Link to="/" className="font-serif italic text-[22px] text-ink-primary">
             М
           </Link>
           <div
@@ -152,6 +150,7 @@ export default function HomePage() {
           className="absolute z-[3] max-w-[620px] px-6"
           style={{
             left: 'clamp(24px, 8vw, 130px)',
+            right: 'clamp(16px, 4vw, 24px)',
             top: '50%',
             transform: 'translateY(-50%)',
           }}
@@ -160,12 +159,12 @@ export default function HomePage() {
           <h1
             className="font-display font-normal m-0"
             style={{
-              fontSize: 'clamp(56px, 8.5vw, 124px)',
+              fontSize: 'clamp(38px, 8.5vw, 124px)',
               lineHeight: 0.98,
               letterSpacing: '-0.015em',
             }}
           >
-            <span className="block text-white">{extras.hero.line1}</span>
+            <span className="block text-ink-primary">{extras.hero.line1}</span>
             <span className="block font-serif italic text-ink-secondary">
               {extras.hero.line2}
             </span>
@@ -182,7 +181,7 @@ export default function HomePage() {
             </Link>
             <Link
               to="/catalog"
-              className="text-xs font-medium tracking-[0.28em] uppercase text-ink-body hover:text-white transition-colors"
+              className="text-xs font-medium tracking-[0.28em] uppercase text-ink-body hover:text-ink-primary transition-colors"
             >
               Посмотреть каталог{' '}
               <span className="text-red ml-1">→</span>
@@ -353,7 +352,7 @@ export default function HomePage() {
           className="border-t border-b border-red py-28 text-center relative overflow-hidden"
           style={{
             background:
-              'linear-gradient(135deg, #8b0000, #c8102e, #8b0000)',
+              'linear-gradient(135deg, var(--red-deep), var(--red), var(--red-deep))',
           }}
         >
           <div
@@ -412,7 +411,7 @@ function ProductCard({ f }: { f: Flower }) {
           <div className="text-[10px] font-medium tracking-[0.28em] uppercase text-red mb-2">
             {f.category_name}
           </div>
-          <h3 className="font-display text-2xl text-white leading-tight group-hover:text-red transition-colors">
+          <h3 className="font-display text-2xl text-ink-primary leading-tight group-hover:text-red transition-colors">
             {f.name}
           </h3>
         </div>

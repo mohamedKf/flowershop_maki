@@ -118,7 +118,7 @@ export default function DashboardPromotionsPage() {
           {items.map((p) => (
             <Card key={p.id} className="p-5">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="font-display text-xl text-white">{p.title}</h3>
+                <h3 className="font-display text-xl text-ink-primary">{p.title}</h3>
                 {p.is_running ? <Badge>идёт</Badge> : <Badge variant="secondary">не активна</Badge>}
               </div>
               {p.subtitle && <p className="text-sm text-ink-body mb-3">{p.subtitle}</p>}

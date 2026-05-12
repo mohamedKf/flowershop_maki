@@ -19,7 +19,7 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr] gap-12 mb-16">
           {/* Brand col */}
           <div>
-            <div className="font-script text-5xl text-white leading-[0.9] mb-1">
+            <div className="font-script text-5xl text-ink-primary leading-[0.9] mb-1">
               маки
             </div>
             <div className="text-[10px] tracking-[0.5em] uppercase text-red mb-7 font-medium">
@@ -90,7 +90,7 @@ function FooterCol({
       <h4 className="text-[11px] tracking-[0.3em] uppercase text-red mb-6 font-medium">
         {title}
       </h4>
-      <div className="space-y-3 [&>a]:block [&>a]:text-sm [&>a]:text-ink-body [&>a]:no-underline [&>a:hover]:text-white [&>a]:transition-colors">
+      <div className="space-y-3 [&>a]:block [&>a]:text-sm [&>a]:text-ink-body [&>a]:no-underline [&>a:hover]:text-ink-primary [&>a]:transition-colors">
         {children}
       </div>
     </div>

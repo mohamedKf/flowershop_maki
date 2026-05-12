@@ -10,7 +10,7 @@ const badgeVariants = cva(
         default: 'bg-red text-white',
         secondary: 'bg-bg-elevated text-ink-body border border-rule',
         outline: 'border border-red text-red',
-        success: 'bg-bg-elevated text-white border border-rule',
+        success: 'bg-bg-elevated text-ink-primary border border-rule',
       },
     },
     defaultVariants: { variant: 'default' },

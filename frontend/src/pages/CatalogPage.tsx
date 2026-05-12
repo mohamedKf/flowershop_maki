@@ -30,47 +30,43 @@ export default function CatalogPage() {
       .finally(() => setLoading(false));
   }, [activeCat]);
 
+  const setCategory = (id: string | null) => {
+    const p = new URLSearchParams(params);
+    if (id) p.set('category', id);
+    else p.delete('category');
+    setParams(p);
+  };
+
   return (
-    <div className="container py-16 md:py-24">
-      <div className="mb-12">
+    <div className="container py-10 md:py-24">
+      <div className="mb-8 md:mb-12">
         <div className="eyebrow mb-4">— Каталог</div>
-        <h1 className="section-title">
-          Все наши <em>цветы</em>
+        <h1 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl leading-[1]">
+          Все наши <em className="font-serif italic text-red">цветы</em>
         </h1>
       </div>
 
-      <div className="flex flex-wrap gap-3 mb-12 pb-8 border-b border-rule">
-        <button
-          onClick={() => {
-            const p = new URLSearchParams(params);
-            p.delete('category');
-            setParams(p);
-          }}
-          className={`px-5 py-2.5 text-[11px] tracking-[0.25em] uppercase border transition-colors ${
-            !activeCat
-              ? 'bg-red border-red text-white'
-              : 'border-rule text-ink-body hover:border-red hover:text-red'
-          }`}
-        >
-          Все
-        </button>
-        {cats.map((c) => (
-          <button
-            key={c.id}
-            onClick={() => {
-              const p = new URLSearchParams(params);
-              p.set('category', String(c.id));
-              setParams(p);
-            }}
-            className={`px-5 py-2.5 text-[11px] tracking-[0.25em] uppercase border transition-colors ${
-              activeCat === String(c.id)
-                ? 'bg-red border-red text-white'
-                : 'border-rule text-ink-body hover:border-red hover:text-red'
-            }`}
-          >
-            {c.name}
-          </button>
-        ))}
+      {/* Category bubbles — horizontal scroll with proper edge fade */}
+      <div className="mb-10 md:mb-12 pb-6 md:pb-8 border-b border-rule -mx-4 md:mx-0">
+        <div className="flex gap-4 md:gap-7 overflow-x-auto scrollbar-hide pb-2 px-4 md:px-0">
+          {/* "All" bubble */}
+          <CategoryBubble
+            label="Все"
+            isAll
+            active={!activeCat}
+            onClick={() => setCategory(null)}
+          />
+
+          {cats.map((c) => (
+            <CategoryBubble
+              key={c.id}
+              label={c.name}
+              photo={c.photo}
+              active={activeCat === String(c.id)}
+              onClick={() => setCategory(String(c.id))}
+            />
+          ))}
+        </div>
       </div>
 
       {loading ? (
@@ -110,7 +106,7 @@ export default function CatalogPage() {
                   <div className="text-[10px] font-medium tracking-[0.28em] uppercase text-red mb-1.5">
                     {f.category_name}
                   </div>
-                  <h3 className="font-display text-2xl text-white group-hover:text-red transition-colors">
+                  <h3 className="font-display text-2xl text-ink-primary group-hover:text-red transition-colors">
                     {f.name}
                   </h3>
                 </div>
@@ -123,5 +119,85 @@ export default function CatalogPage() {
         </div>
       )}
     </div>
+  );
+}
+
+// ───────────────────────────────────────────────────────────────────────────────
+
+interface BubbleProps {
+  label: string;
+  photo?: string | null;
+  active: boolean;
+  isAll?: boolean;
+  onClick: () => void;
+}
+
+function CategoryBubble({ label, photo, active, isAll, onClick }: BubbleProps) {
+  const firstLetter = label.charAt(0).toUpperCase();
+  // Only treat as a real photo if it looks like a URL (starts with http or /)
+  const hasPhoto =
+    !!photo &&
+    typeof photo === 'string' &&
+    photo.trim() !== '' &&
+    (photo.startsWith('http') || photo.startsWith('/'));
+
+  return (
+    <button
+      onClick={onClick}
+      className="flex-shrink-0 flex flex-col items-center gap-2 group min-w-[72px] md:min-w-[96px]"
+      type="button"
+    >
+      <div
+        className={`relative w-[68px] h-[68px] md:w-24 md:h-24 rounded-full overflow-hidden transition-all duration-300 ${
+          active
+            ? 'scale-105 ring-2 ring-red ring-offset-[3px] ring-offset-bg-base'
+            : 'ring-1 ring-rule group-hover:ring-red'
+        }`}
+        style={{
+          // Always have a visible background — gradient by default, overridden if photo present
+          background: isAll
+            ? undefined
+            : 'linear-gradient(135deg, var(--red-deep), var(--red-dark))',
+        }}
+      >
+        {isAll ? (
+          // "All" bubble — outlined with text inside
+          <div className="w-full h-full flex items-center justify-center bg-bg-elevated">
+            <span
+              className={`font-display text-base md:text-xl transition-colors ${
+                active ? 'text-red' : 'text-ink-primary group-hover:text-red'
+              }`}
+            >
+              Все
+            </span>
+          </div>
+        ) : hasPhoto ? (
+          <img
+            src={photo!}
+            alt={label}
+            className="w-full h-full object-cover"
+            style={{ filter: active ? 'brightness(0.95)' : 'brightness(0.8)' }}
+            onError={(e) => {
+              // If image fails to load, hide it so the gradient bg shows
+              (e.target as HTMLImageElement).style.display = 'none';
+            }}
+          />
+        ) : (
+          // No-photo fallback — first letter centered on the gradient bg
+          <div className="w-full h-full flex items-center justify-center">
+            <span className="font-display text-2xl text-white">
+              {firstLetter}
+            </span>
+          </div>
+        )}
+      </div>
+      <span
+        className={`text-[10px] md:text-[11px] tracking-[0.2em] md:tracking-[0.25em] uppercase font-medium transition-colors max-w-[80px] md:max-w-[90px] text-center leading-tight ${
+          active ? 'text-red' : 'text-ink-body group-hover:text-red'
+        }`}
+      >
+        {label}
+      </span>
+    </button>
   );
 }

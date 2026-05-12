@@ -51,7 +51,18 @@ export default function FlowerDetailPage() {
       await add(f.id, qty);
       nav('/cart');
     } catch (e: any) {
-      setErr(e?.response?.data?.detail || 'Не удалось добавить в корзину');
+      const data = e?.response?.data;
+      let msg = 'Не удалось добавить в корзину';
+      if (typeof data === 'string') msg = data;
+      else if (data?.detail) msg = data.detail;
+      else if (data && typeof data === 'object') {
+        // DRF validation errors come as {field: ["message"]}
+        const fieldErrors = Object.entries(data)
+          .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`)
+          .join('; ');
+        if (fieldErrors) msg = fieldErrors;
+      }
+      setErr(msg);
     } finally {
       setAdding(false);
     }
@@ -83,7 +94,7 @@ export default function FlowerDetailPage() {
           <div className="text-[11px] tracking-[0.3em] uppercase text-red mb-3">
             {f.category_name}
           </div>
-          <h1 className="font-display text-5xl md:text-6xl text-white mb-6 leading-none">
+          <h1 className="font-display text-4xl sm:text-5xl md:text-6xl text-ink-primary mb-6 leading-none">
             {f.name}
           </h1>
 
@@ -110,7 +121,7 @@ export default function FlowerDetailPage() {
                 min={1}
                 value={qty}
                 onChange={(e) => setQty(Math.max(1, parseInt(e.target.value || '1')))}
-                className="w-20 h-12 bg-transparent text-center text-white font-display text-xl"
+                className="w-20 h-12 bg-transparent text-center text-ink-primary font-display text-xl"
               />
               <button
                 onClick={() => setQty(qty + 1)}
@@ -139,6 +150,10 @@ export default function FlowerDetailPage() {
           {f.is_out_of_stock ? (
             <div className="px-6 py-4 border border-rule text-ink-muted text-sm tracking-[0.2em] uppercase text-center">
               Нет в наличии
+            </div>
+          ) : user && user.role !== 'customer' ? (
+            <div className="px-6 py-4 border border-rule text-ink-muted text-sm tracking-[0.2em] uppercase text-center">
+              Корзина доступна только клиентам
             </div>
           ) : (
             <Button

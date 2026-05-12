@@ -50,7 +50,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [refresh]);
 
   const add = async (flowerId: number, quantity: number) => {
-    await api.post('/cart/items/', { flower: flowerId, quantity, shop: SHOP_SLUG });
+    await api.post('/cart/items/', {
+      flower: flowerId,
+      flower_id: flowerId,
+      quantity,
+      shop: SHOP_SLUG,
+      shop_slug: SHOP_SLUG,
+    });
     await refresh();
   };
 

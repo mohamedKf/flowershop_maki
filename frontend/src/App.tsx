@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { CartProvider } from '@/contexts/CartContext';
 import { ShopProvider } from '@/contexts/ShopContext';
+import { ThemeProvider } from '@/contexts/ThemeContext';
 
 import { Layout } from '@/components/layout/Layout';
 import HomePage from '@/pages/HomePage';
@@ -42,7 +43,7 @@ function NotFound() {
   return (
     <div className="container py-32 text-center">
       <div className="font-display text-9xl text-red mb-6">404</div>
-      <h1 className="font-display text-4xl mb-4 text-white">Страница не найдена</h1>
+      <h1 className="font-display text-4xl mb-4 text-ink-primary">Страница не найдена</h1>
       <p className="text-ink-muted">Возможно, вы перешли по устаревшей ссылке.</p>
     </div>
   );
@@ -51,9 +52,10 @@ function NotFound() {
 export default function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <ShopProvider>
-          <CartProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <ShopProvider>
+            <CartProvider>
             <Routes>
               <Route element={<Layout />}>
                 <Route index element={<HomePage />} />
@@ -78,8 +80,9 @@ export default function App() {
               </Route>
             </Routes>
           </CartProvider>
-        </ShopProvider>
-      </AuthProvider>
+          </ShopProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </BrowserRouter>
   );
 }

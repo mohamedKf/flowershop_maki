@@ -11,12 +11,12 @@ const buttonVariants = cva(
         default:
           'bg-red text-white hover:-translate-y-0.5 shadow-[0_8px_32px_rgba(200,16,46,0.33)] hover:shadow-[0_12px_40px_rgba(200,16,46,0.45)]',
         outline:
-          'border border-rule-strong bg-transparent text-white hover:border-red hover:text-red',
-        ghost: 'bg-transparent text-ink-body hover:text-white',
-        link: 'border-b border-red pb-1 text-white hover:text-red rounded-none px-0',
+          'border border-rule-strong bg-transparent text-ink-primary hover:border-red hover:text-red',
+        ghost: 'bg-transparent text-ink-body hover:text-ink-primary',
+        link: 'border-b border-red pb-1 text-ink-primary hover:text-red rounded-none px-0',
         destructive: 'bg-red-deep text-white hover:bg-red',
         secondary:
-          'bg-bg-elevated text-white border border-rule hover:border-red',
+          'bg-bg-elevated text-ink-primary border border-rule hover:border-red',
       },
       size: {
         default: 'h-12 px-7',

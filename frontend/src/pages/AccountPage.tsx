@@ -52,7 +52,7 @@ export default function AccountPage() {
           {orders.map((o) => (
             <div key={o.id} className="bg-bg-card border border-rule p-6 flex flex-wrap items-center justify-between gap-4">
               <div>
-                <div className="font-display text-xl text-white">№ {o.number}</div>
+                <div className="font-display text-xl text-ink-primary">№ {o.number}</div>
                 <div className="text-xs text-ink-muted mt-1">{formatDateTime(o.created_at)}</div>
               </div>
               <div className="text-[11px] tracking-[0.25em] uppercase text-red">

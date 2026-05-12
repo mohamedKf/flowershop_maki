@@ -132,7 +132,7 @@ export default function DashboardFlowersPage() {
               )}
               <div className="flex-1 min-w-[200px]">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="font-medium text-white">{f.name}</h3>
+                  <h3 className="font-medium text-ink-primary">{f.name}</h3>
                   <Badge variant="secondary">{f.category_name}</Badge>
                   {f.is_featured && <Badge>Хит</Badge>}
                   {f.is_out_of_stock && <Badge variant="outline">нет в наличии</Badge>}
@@ -161,7 +161,7 @@ export default function DashboardFlowersPage() {
             <DialogTitle>{editing ? 'Изменить цветок' : 'Новый цветок'}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <Label>Категория</Label>
                 <Select value={form.category} onChange={(e) => setForm({ ...form, category: Number(e.target.value) })}>
@@ -177,7 +177,7 @@ export default function DashboardFlowersPage() {
               <Label>Описание</Label>
               <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={2} />
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <Label>Цена ₽</Label>
                 <Input type="number" step="0.01" value={form.base_price}
