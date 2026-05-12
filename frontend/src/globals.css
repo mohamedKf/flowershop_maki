@@ -2,6 +2,83 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============= DARK THEME (default, cinematic) ============= */
+:root,
+:root[data-theme='dark'] {
+  --bg-base: #000000;
+  --bg-stage1: #2a0408;
+  --bg-stage2: #0a0203;
+  --bg-card: #0d0405;
+  --bg-elevated: #181010;
+
+  --ink-primary: #ffffff;
+  --ink-secondary: rgba(246, 233, 235, 0.85);
+  --ink-body: rgba(246, 233, 235, 0.7);
+  --ink-muted: rgba(246, 233, 235, 0.55);
+  --ink-faint: rgba(246, 233, 235, 0.4);
+
+  --red: #c8102e;
+  --red-bright: #e63946;
+  --red-deep: #8b0000;
+  --red-shadow: #3a0008;
+  --red-dark: #6b0810;
+
+  --rule: rgba(246, 233, 235, 0.08);
+  --rule-strong: rgba(246, 233, 235, 0.18);
+
+  /* Hero background gradient */
+  --hero-gradient: radial-gradient(ellipse at 70% 30%, #2a0408 0%, #0a0203 55%, #000 100%);
+  --hero-vignette: radial-gradient(circle at 20% 80%, rgba(200, 16, 46, 0.12), transparent 50%),
+    radial-gradient(circle at 90% 10%, rgba(200, 16, 46, 0.08), transparent 40%);
+
+  /* Whisper text */
+  --whisper-stroke: rgba(200, 16, 46, 0.18);
+
+  /* Scrollbar */
+  --scrollbar-track: #000;
+  --scrollbar-thumb: #2a0408;
+  --scrollbar-thumb-hover: #c8102e;
+}
+
+/* ============= LIGHT THEME (cream/ivory + dusty rose, sakura) ============= */
+:root[data-theme='light'] {
+  --bg-base: #fbf6f2;
+  --bg-stage1: #f5e8e0;
+  --bg-stage2: #f0ddd2;
+  --bg-card: #ffffff;
+  --bg-elevated: #f5ebe4;
+
+  --ink-primary: #1a0e0a;
+  --ink-secondary: rgba(26, 14, 10, 0.78);
+  --ink-body: rgba(26, 14, 10, 0.65);
+  --ink-muted: rgba(26, 14, 10, 0.5);
+  --ink-faint: rgba(26, 14, 10, 0.35);
+
+  /* Dusty rose (instead of bright red) */
+  --red: #b8546e;
+  --red-bright: #c97090;
+  --red-deep: #8a3a52;
+  --red-shadow: #f0d9df;
+  --red-dark: #6b2a3c;
+
+  --rule: rgba(26, 14, 10, 0.1);
+  --rule-strong: rgba(26, 14, 10, 0.22);
+
+  /* Hero gradient — soft pink blush */
+  --hero-gradient: radial-gradient(ellipse at 70% 30%, #f8e6e6 0%, #fbf0ec 55%, #fbf6f2 100%);
+  --hero-vignette: radial-gradient(circle at 20% 80%, rgba(184, 84, 110, 0.08), transparent 50%),
+    radial-gradient(circle at 90% 10%, rgba(184, 84, 110, 0.05), transparent 40%);
+
+  /* Whisper outlined text */
+  --whisper-stroke: rgba(184, 84, 110, 0.25);
+
+  /* Scrollbar */
+  --scrollbar-track: #fbf6f2;
+  --scrollbar-thumb: #f0d9df;
+  --scrollbar-thumb-hover: #b8546e;
+}
+
+/* ============= BASE ============= */
 @layer base {
   *,
   *::before,
@@ -13,14 +90,15 @@
   body {
     margin: 0;
     padding: 0;
-    background: #000;
-    color: #fff;
+    background: var(--bg-base);
+    color: var(--ink-primary);
     font-family: 'Inter', system-ui, sans-serif;
     font-weight: 300;
     line-height: 1.7;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    transition: background-color 0.4s ease, color 0.4s ease;
   }
 
   body {
@@ -29,33 +107,30 @@
   }
 
   ::selection {
-    background: #c8102e;
+    background: var(--red);
     color: #fff;
   }
 
-  /* Scrollbar */
   ::-webkit-scrollbar {
     width: 10px;
     height: 10px;
   }
   ::-webkit-scrollbar-track {
-    background: #000;
+    background: var(--scrollbar-track);
   }
   ::-webkit-scrollbar-thumb {
-    background: #2a0408;
+    background: var(--scrollbar-thumb);
     border-radius: 0;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #c8102e;
+    background: var(--scrollbar-thumb-hover);
   }
 
-  /* Smooth focus */
   :focus-visible {
-    outline: 2px solid #c8102e;
+    outline: 2px solid var(--red);
     outline-offset: 2px;
   }
 
-  /* Form elements baseline */
   input,
   textarea,
   select {
@@ -64,18 +139,16 @@
 }
 
 @layer components {
-  /* Brand whisper text effect (decorative giant outlined "маки") */
   .brand-whisper {
     font-family: 'Cormorant Garamond', serif;
     font-style: italic;
     font-weight: 400;
     color: transparent;
-    -webkit-text-stroke: 1px rgba(200, 16, 46, 0.18);
+    -webkit-text-stroke: 1px var(--whisper-stroke);
     pointer-events: none;
     user-select: none;
   }
 
-  /* Editorial eyebrow */
   .eyebrow {
     @apply inline-flex items-center gap-3 text-[11px] font-medium tracking-[0.4em] uppercase text-red;
   }
@@ -86,55 +159,64 @@
     background: currentColor;
   }
 
-  /* Sharp red CTA */
   .btn-red {
     @apply inline-flex items-center gap-3 bg-red text-white px-7 py-3.5 text-xs font-medium tracking-[0.28em] uppercase cursor-pointer transition-all duration-300;
     box-shadow: 0 8px 32px rgba(200, 16, 46, 0.33);
     border: none;
   }
+  :root[data-theme='light'] .btn-red {
+    box-shadow: 0 8px 32px rgba(184, 84, 110, 0.25);
+  }
   .btn-red:hover:not(:disabled) {
     transform: translateY(-2px);
     box-shadow: 0 12px 40px rgba(200, 16, 46, 0.45);
+  }
+  :root[data-theme='light'] .btn-red:hover:not(:disabled) {
+    box-shadow: 0 12px 40px rgba(184, 84, 110, 0.35);
   }
   .btn-red:disabled {
     opacity: 0.5;
     cursor: not-allowed;
   }
 
-  /* Outline button */
   .btn-outline {
-    @apply inline-flex items-center gap-3 border border-rule-strong text-white px-7 py-3.5 text-xs font-medium tracking-[0.28em] uppercase cursor-pointer transition-all duration-300 bg-transparent;
+    @apply inline-flex items-center gap-3 border px-7 py-3.5 text-xs font-medium tracking-[0.28em] uppercase cursor-pointer transition-all duration-300 bg-transparent;
+    border-color: var(--rule-strong);
+    color: var(--ink-primary);
   }
   .btn-outline:hover:not(:disabled) {
-    border-color: #c8102e;
-    color: #c8102e;
+    border-color: var(--red);
+    color: var(--red);
   }
 
-  /* Section heading */
   .section-title {
-    @apply font-display text-5xl md:text-6xl lg:text-7xl leading-[1] text-white;
+    @apply font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl leading-[1];
+    color: var(--ink-primary);
   }
   .section-title em {
-    @apply font-serif italic text-red;
+    @apply font-serif italic;
+    color: var(--red);
   }
 
-  /* Label component (small caps editorial) */
   .label-caps {
     @apply text-[11px] font-medium tracking-[0.35em] uppercase text-red;
   }
 
-  /* Frame box (bordered rectangle behind hero image) */
   .frame-offset {
     position: absolute;
     inset: 24px;
-    border: 1px solid #c8102e;
+    border: 1px solid var(--red);
     pointer-events: none;
     transform: translate(20px, 20px);
   }
 
-  /* Form input styles */
   .input-base {
-    @apply w-full bg-transparent border-b border-rule px-0 py-3 text-white placeholder:text-ink-muted focus:outline-none focus:border-red transition-colors;
+    @apply w-full bg-transparent px-0 py-3 placeholder:text-ink-muted focus:outline-none transition-colors;
+    border-bottom: 1px solid var(--rule);
+    color: var(--ink-primary);
+  }
+  .input-base:focus {
+    border-color: var(--red);
   }
 }
 
@@ -142,20 +224,34 @@
   .text-balance {
     text-wrap: balance;
   }
+  /* Hide scrollbar but keep scrolling functional — for category bubbles and similar horizontal scrollers */
+  .scrollbar-hide {
+    -ms-overflow-style: none; /* IE/Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+  }
 }
 
-/* Petal animation container */
+/* ============= PETALS ============= */
 .petals {
-  position: absolute;
+  position: fixed;
   inset: 0;
   overflow: hidden;
   pointer-events: none;
-  z-index: 2;
+  z-index: 1;
 }
 .petal {
   position: absolute;
   top: -60px;
   will-change: transform;
+}
+
+/* On work pages we hide petals entirely (rendered conditionally in code, but
+   defensive CSS in case anything slips through) */
+.no-petals .petals {
+  display: none !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

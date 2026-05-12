@@ -78,6 +78,8 @@ INSTALLED_APPS = [
     # Third-party
     'rest_framework',
     'rest_framework.authtoken',
+    'cloudinary',
+    'cloudinary_storage',
 
     # Local apps
     'accounts.apps.AccountsConfig',
@@ -92,7 +94,6 @@ AUTH_USER_MODEL = 'accounts.User'
 # Signup codes (set on Railway as environment variables)
 # These codes let staff register as Manager/Worker. Customers don't need a code.
 # ---------------------------------------------------------------------------
-import os
 MANAGER_SIGNUP_CODE = os.environ.get('MANAGER_SIGNUP_CODE', 'CHANGE_ME_MANAGER')
 WORKER_SIGNUP_CODE = os.environ.get('WORKER_SIGNUP_CODE', 'CHANGE_ME_WORKER')
 
@@ -119,15 +120,39 @@ SBERBANK_FALLBACK_FAIL_URL = os.environ.get(
 )
 
 # ---------------------------------------------------------------------------
-# Media storage — Railway bucket (S3-compatible) when USE_S3_STORAGE=1
-# Otherwise local /media (dev). Configure on Railway with these env vars:
-#   USE_S3_STORAGE=1
-#   AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
-#   AWS_STORAGE_BUCKET_NAME, AWS_S3_ENDPOINT_URL, AWS_S3_REGION_NAME
+# Media storage
+#   - USE_CLOUDINARY=1     → Cloudinary (recommended for production)
+#   - USE_S3_STORAGE=1     → Railway/S3 bucket (alternative)
+#   - neither set          → local /media (dev only — files vanish on Railway redeploy)
 # ---------------------------------------------------------------------------
+USE_CLOUDINARY = os.environ.get('USE_CLOUDINARY', '').lower() in ('1', 'true', 'yes')
 USE_S3_STORAGE = os.environ.get('USE_S3_STORAGE', '').lower() in ('1', 'true', 'yes')
 
-if USE_S3_STORAGE:
+# Default media URL (overridden below if using cloud storage)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# Default storage backends — modified below depending on USE_CLOUDINARY / USE_S3_STORAGE
+STORAGES = {
+    'default': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+    },
+    'staticfiles': {
+        'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
+    },
+}
+
+if USE_CLOUDINARY:
+    CLOUDINARY_STORAGE = {
+        'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME', ''),
+        'API_KEY': os.environ.get('CLOUDINARY_API_KEY', ''),
+        'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET', ''),
+        'SECURE': True,
+    }
+    STORAGES['default'] = {
+        'BACKEND': 'cloudinary_storage.storage.MediaCloudinaryStorage',
+    }
+elif USE_S3_STORAGE:
     INSTALLED_APPS += ['storages']
 
     AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID', '')
@@ -138,27 +163,18 @@ if USE_S3_STORAGE:
     AWS_S3_CUSTOM_DOMAIN = os.environ.get('AWS_S3_CUSTOM_DOMAIN', '')
     AWS_S3_OBJECT_PARAMETERS = {'CacheControl': 'max-age=86400'}
     AWS_S3_FILE_OVERWRITE = False
-    AWS_DEFAULT_ACL = 'public-read'
+    AWS_DEFAULT_ACL = None
     AWS_QUERYSTRING_AUTH = False
     AWS_S3_ADDRESSING_STYLE = 'virtual'
 
-    # Default storage = public bucket. Private docs (invoices) use PrivateMediaStorage explicitly.
-    STORAGES = {
-        'default': {
-            'BACKEND': 'flowershop.storage_backends.PublicMediaStorage',
-        },
-        'staticfiles': {
-            'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
-        },
+    STORAGES['default'] = {
+        'BACKEND': 'flowershop.storage_backends.PublicMediaStorage',
     }
 
     if AWS_S3_CUSTOM_DOMAIN:
         MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
     else:
         MEDIA_URL = f'{AWS_S3_ENDPOINT_URL}/{AWS_STORAGE_BUCKET_NAME}/media/'
-else:
-    MEDIA_URL = '/media/'
-    MEDIA_ROOT = BASE_DIR / 'media'
 
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -213,7 +229,6 @@ WSGI_APPLICATION = 'flowershop.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-# Database
 # Use DATABASE_URL env var if set (Railway Postgres), else SQLite for local dev.
 
 import dj_database_url
@@ -274,18 +289,10 @@ STATICFILES_DIRS = [
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # WhiteNoise serves compressed static files in production.
-# Override the storages dict that was configured for media bucket — keep
-# default/media settings, just override staticfiles.
-if 'STORAGES' in dir():
-    STORAGES.setdefault('staticfiles', {})
-    STORAGES['staticfiles']['BACKEND'] = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-else:
-    STORAGES = {
-        'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
-        'staticfiles': {
-            'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
-        },
-    }
+# Override only the staticfiles backend, leave default (media) alone.
+STORAGES['staticfiles'] = {
+    'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+}
 
 # Tell WhiteNoise where to look for index.html and assets/
 WHITENOISE_ROOT = BASE_DIR / 'static_frontend'

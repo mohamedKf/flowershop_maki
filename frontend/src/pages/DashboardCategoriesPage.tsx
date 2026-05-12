@@ -105,7 +105,7 @@ export default function DashboardCategoriesPage() {
               )}
               <div className="p-5">
                 <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-display text-xl text-white">{c.name}</h3>
+                  <h3 className="font-display text-xl text-ink-primary">{c.name}</h3>
                   {!c.is_active && <Badge variant="secondary">скрыта</Badge>}
                 </div>
                 {c.description && (

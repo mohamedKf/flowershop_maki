@@ -73,7 +73,7 @@ export default function CustomBouquetPage() {
                   <div className="text-[10px] tracking-[0.25em] uppercase text-red mb-1">
                     {f.category_name}
                   </div>
-                  <h3 className="font-display text-xl text-white">{f.name}</h3>
+                  <h3 className="font-display text-xl text-ink-primary">{f.name}</h3>
                 </div>
                 <div className="text-red font-display text-lg whitespace-nowrap">
                   {formatRub(f.base_price)}
@@ -87,7 +87,7 @@ export default function CustomBouquetPage() {
                 >
                   <Minus className="w-3 h-3" />
                 </button>
-                <div className="flex-1 h-10 flex items-center justify-center text-white font-display text-lg">
+                <div className="flex-1 h-10 flex items-center justify-center text-ink-primary font-display text-lg">
                   {qty}
                 </div>
                 <button
@@ -111,7 +111,13 @@ export default function CustomBouquetPage() {
             </div>
             <div className="font-display text-3xl text-red">{formatRub(total)}</div>
           </div>
-          <Button onClick={submit} size="lg">Оформить букет</Button>
+          {user && user.role !== 'customer' ? (
+            <span className="text-xs tracking-[0.2em] uppercase text-ink-muted">
+              Доступно клиентам
+            </span>
+          ) : (
+            <Button onClick={submit} size="lg">Оформить букет</Button>
+          )}
         </div>
       )}
     </div>

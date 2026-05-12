@@ -85,7 +85,7 @@ export default function DashboardPage() {
           )}
 
           <div className="flex justify-between items-baseline mb-5">
-            <h2 className="font-display text-3xl text-white">Последние заказы</h2>
+            <h2 className="font-display text-3xl text-ink-primary">Последние заказы</h2>
             <Link
               to="/dashboard/orders"
               className="text-[11px] tracking-[0.25em] uppercase text-ink-body hover:text-red flex items-center gap-2"
@@ -101,7 +101,7 @@ export default function DashboardPage() {
               {data.recent_orders.slice(0, 8).map((o) => (
                 <Card key={o.number} className="p-5 flex items-center justify-between gap-4 flex-wrap">
                   <div>
-                    <div className="font-medium text-white">№ {o.number}</div>
+                    <div className="font-medium text-ink-primary">№ {o.number}</div>
                     <div className="text-xs text-ink-muted mt-1">
                       {o.customer_name} · {formatDateTime(o.created_at)}
                     </div>
@@ -127,7 +127,7 @@ function Kpi({
         {icon}
         {label}
       </div>
-      <div className="font-display text-3xl text-white">{value}</div>
+      <div className="font-display text-3xl text-ink-primary">{value}</div>
       {trend && <div className="text-xs text-ink-faint mt-2">{trend}</div>}
     </Card>
   );

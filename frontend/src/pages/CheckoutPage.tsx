@@ -105,7 +105,7 @@ export default function CheckoutPage() {
         </div>
 
         <div className="bg-bg-card border border-rule p-8 h-fit lg:sticky lg:top-32">
-          <h3 className="font-display text-2xl text-white mb-6">Итого</h3>
+          <h3 className="font-display text-2xl text-ink-primary mb-6">Итого</h3>
 
           <div className="space-y-3 mb-6 max-h-72 overflow-y-auto pr-2">
             {cart.items.map((it) => (
@@ -113,7 +113,7 @@ export default function CheckoutPage() {
                 <span className="text-ink-body truncate pr-2">
                   {it.flower_name} × {it.quantity}
                 </span>
-                <span className="text-white whitespace-nowrap">
+                <span className="text-ink-primary whitespace-nowrap">
                   {formatRub(it.line_total)}
                 </span>
               </div>

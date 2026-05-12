@@ -54,19 +54,19 @@ export default function DashboardOrdersPage() {
             <Card key={o.id} className="p-5">
               <div className="flex items-center justify-between gap-4 flex-wrap mb-4">
                 <div>
-                  <div className="font-display text-xl text-white">№ {o.number}</div>
+                  <div className="font-display text-xl text-ink-primary">№ {o.number}</div>
                   <div className="text-xs text-ink-muted mt-1">
                     {o.customer_name} · {o.customer_phone} · {formatDateTime(o.created_at)}
                   </div>
                 </div>
                 <div className="font-display text-2xl text-red">{formatRub(o.total)}</div>
               </div>
-              <div className="flex items-center justify-between gap-4 pt-4 border-t border-rule">
-                <div className="text-sm text-ink-body truncate">{o.delivery_address}</div>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-4 border-t border-rule">
+                <div className="text-sm text-ink-body break-words">{o.delivery_address}</div>
                 <Select
                   value={o.status}
                   onChange={(e) => updateStatus(o.number, e.target.value)}
-                  className="max-w-[200px] h-10"
+                  className="w-full sm:w-auto sm:max-w-[200px] h-10"
                 >
                   {STATUSES.map((s) => (
                     <option key={s.v} value={s.v}>{s.l}</option>

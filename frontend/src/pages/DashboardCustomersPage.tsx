@@ -50,7 +50,7 @@ export default function DashboardCustomersPage() {
           {filtered.map((c) => (
             <Card key={c.id} className="p-5 flex items-center justify-between gap-4 flex-wrap">
               <div>
-                <div className="font-medium text-white text-lg">
+                <div className="font-medium text-ink-primary text-lg">
                   {c.first_name} {c.last_name}
                 </div>
                 <div className="text-xs text-ink-muted mt-1">
